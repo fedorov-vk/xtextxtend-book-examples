@@ -3,23 +3,46 @@
  */
 package org.example.entities.validation
 
+import org.eclipse.xtext.validation.Check
+import org.example.entities.entities.Attribute
+import org.example.entities.entities.EntitiesPackage
+import org.example.entities.entities.Entity
+
+import static extension java.lang.Character.*
 
 /**
  * This class contains custom validation rules. 
- *
+ * 
  * See https://www.eclipse.org/Xtext/documentation/303_runtime_concepts.html#validation
  */
 class EntitiesValidator extends AbstractEntitiesValidator {
-	
-//	public static val INVALID_NAME = 'invalidName'
-//
-//	@Check
-//	def checkGreetingStartsWithCapital(Greeting greeting) {
-//		if (!Character.isUpperCase(greeting.name.charAt(0))) {
-//			warning('Name should start with a capital', 
-//					EntitiesPackage.Literals.GREETING__NAME,
-//					INVALID_NAME)
-//		}
-//	}
-	
+
+	@Check
+	def checkNoCycleInEntityHierarchy(Entity entity) {
+		if (entity.superType === null)
+			return // nothing to check
+		val visitedEntities = newHashSet(entity)
+		var current = entity.superType
+		while (current !== null) {
+			if (visitedEntities.contains(current)) {
+				error("cycle in hierarchy of entity '" + current.name + "'", EntitiesPackage.eINSTANCE.entity_SuperType)
+				return
+			}
+			visitedEntities.add(current)
+			current = current.superType
+		}
+	}
+
+	@Check
+	def checkEntityNameStartsWithCapital(Entity entity) {
+		if (entity.name.charAt(0).lowerCase)
+			warning("Entity name should start with a capital", EntitiesPackage.eINSTANCE.entity_Name)
+	}
+
+	@Check
+	def checkAttributeNameStartsWithLowercase(Attribute attr) {
+		if (attr.name.charAt(0).upperCase)
+			warning("Attribute name should start with a lowercase", EntitiesPackage.eINSTANCE.attribute_Name)
+	}
+
 }
