@@ -1,0 +1,84 @@
+grammar org.example.smalljava.SmallJava with org.eclipse.xtext.common.Terminals
+
+generate smallJava "http://www.example.org/smalljava/SmallJava"
+
+SJProgram:
+	classes+=SJClass*;
+
+SJClass:
+	'class' name=ID ('extends' superclass=[SJClass])? '{'
+		members+=SJMember*
+	'}';
+
+SJMember:
+	SJField | SJMethod;
+
+SJField:
+	SJTypedDeclaration ';';
+
+SJMethod:
+	SJTypedDeclaration
+	'(' (params+=SJParameter (',' params+=SJParameter)*)? ')'
+	body=SJBlock;
+
+SJParameter:
+	SJTypedDeclaration;
+
+SJBlock:
+	{SJBlock} '{' statements+=SJStatement* '}';
+
+SJStatement:
+	SJVariableDeclaration |
+	SJReturn |
+	SJExpression ';' |
+	SJIfStatement;
+
+SJVariableDeclaration:
+	SJTypedDeclaration '=' expression=SJExpression ';';
+
+SJReturn:
+	'return' expression=SJExpression ';';
+
+SJIfStatement:
+	'if' '(' expression=SJExpression ')' thenBlock=SJIfBlock
+	(=>'else' elseBlock=SJIfBlock)?;
+
+SJIfBlock returns SJBlock:
+	statements+=SJStatement
+	| SJBlock;
+
+SJSymbol:
+	SJVariableDeclaration | SJParameter;
+
+fragment SJTypedDeclaration *:
+	type=[SJClass] name=ID;
+
+SJNamedElement:
+	SJClass | SJMember | SJSymbol;
+
+SJExpression:
+	SJAssignment;
+
+SJAssignment returns SJExpression:
+	SJSelectionExpression
+	({SJAssignment.left=current} '=' right=SJExpression)?; // Right associativity
+
+SJSelectionExpression returns SJExpression:
+	SJTerminalExpression
+	(
+		{SJMemberSelection.receiver=current} '.'
+		member=[SJMember]
+		(methodinvocation?='('
+			(args+=SJExpression (',' args+=SJExpression)*)? ')'
+		)?
+	)*;
+
+SJTerminalExpression returns SJExpression:
+	{SJStringConstant} value=STRING |
+	{SJIntConstant} value=INT |
+	{SJBoolConstant} value=('true' | 'false') |
+	{SJThis} 'this' |
+	{SJNull} 'null' |
+	{SJSymbolRef} symbol=[SJSymbol] |
+	{SJNew} 'new' type=[SJClass] '(' ')' |
+	'(' SJExpression ')';
