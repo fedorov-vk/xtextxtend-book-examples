@@ -35,6 +35,25 @@ class ExpressionsModelUtilTest {
 		]
 	}
 
+	@Test def testIsVariableDefinedBeforeTrue() {
+		'''
+			var i = 0
+			eval i
+		'''.assertVariableDefinedBefore(true)
+	}
+
+	@Test def testIsVariableDefinedBeforeFalse() {
+		'''
+			var i = i
+		'''.assertVariableDefinedBefore(false)
+	}
+
+	@Test def testIsVariableDefinedBeforeWhenVariableUndefined() {
+		'''
+			eval i
+		'''.assertVariableDefinedBefore(false)
+	}
+
 	def private void assertVariablesDefinedBefore(ExpressionsModel model, int elemIndex, CharSequence expectedVars) {
 		expectedVars.assertEquals(
 			model.elements.get(elemIndex).variablesDefinedBefore.map[name].join(",")
