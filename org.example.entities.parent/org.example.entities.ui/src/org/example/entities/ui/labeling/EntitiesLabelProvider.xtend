@@ -6,6 +6,8 @@ package org.example.entities.ui.labeling
 import com.google.inject.Inject
 import org.eclipse.emf.edit.ui.provider.AdapterFactoryLabelProvider
 import org.eclipse.xtext.ui.label.DefaultEObjectLabelProvider
+import org.example.entities.entities.Attribute
+import org.example.entities.entities.Entity
 
 /**
  * Provides labels for EObjects.
@@ -14,18 +16,22 @@ import org.eclipse.xtext.ui.label.DefaultEObjectLabelProvider
  */
 class EntitiesLabelProvider extends DefaultEObjectLabelProvider {
 
+	@Inject extension TypeRepresentation
+
 	@Inject
 	new(AdapterFactoryLabelProvider delegate) {
 		super(delegate);
 	}
 
-	// Labels and icons can be computed like this:
-	
-//	def text(Greeting ele) {
-//		'A greeting to ' + ele.name
-//	}
-//
-//	def image(Greeting ele) {
-//		'Greeting.gif'
-//	}
+	def text(Attribute a) {
+		a.name + if (a.type !== null)
+			" : " + a.type.representation
+		else
+			""
+	}
+
+	def image(Entity e) { "Entity.gif" }
+
+	def image(Attribute a) { "Attribute.gif" }
+
 }
