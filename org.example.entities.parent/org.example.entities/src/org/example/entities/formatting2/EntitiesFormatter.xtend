@@ -6,10 +6,11 @@ package org.example.entities.formatting2
 import com.google.inject.Inject
 import org.eclipse.xtext.formatting2.AbstractFormatter2
 import org.eclipse.xtext.formatting2.IFormattableDocument
+import org.example.entities.entities.AttributeType
 import org.example.entities.entities.Entity
 import org.example.entities.entities.Model
 import org.example.entities.services.EntitiesGrammarAccess
-import org.example.entities.entities.AttributeType
+
 import static org.example.entities.entities.EntitiesPackage.Literals.*
 
 class EntitiesFormatter extends AbstractFormatter2 {
@@ -52,4 +53,5 @@ class EntitiesFormatter extends AbstractFormatter2 {
 			attributeType.regionFor.keyword("]").prepend[noSpace].append[oneSpace]
 		}
 	}
+
 }
