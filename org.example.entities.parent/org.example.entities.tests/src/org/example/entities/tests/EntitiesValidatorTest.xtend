@@ -1,17 +1,15 @@
 package org.example.entities.tests
 
 import com.google.inject.Inject
-import org.example.entities.entities.EntitiesPackage
-import org.example.entities.validation.EntitiesValidator
 import org.eclipse.xtext.testing.InjectWith
 import org.eclipse.xtext.testing.extensions.InjectionExtension
 import org.eclipse.xtext.testing.util.ParseHelper
-import org.example.entities.entities.Model
 import org.eclipse.xtext.testing.validation.ValidationTestHelper
-import org.junit.jupiter.api.Assertions
+import org.example.entities.entities.EntitiesPackage
+import org.example.entities.entities.Model
+import org.example.entities.validation.EntitiesValidator
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.^extension.ExtendWith
-import org.example.entities.entities.EntityType
 
 @ExtendWith(InjectionExtension)
 @InjectWith(EntitiesInjectorProvider)
