@@ -26,5 +26,6 @@ Export-Package: org.example.entities.entities.impl,
  org.example.entities.services,
  org.example.entities.parser.antlr.internal,
  org.example.entities.scoping,
- org.example.entities.serializer
+ org.example.entities.serializer,
+ org.example.entities.formatting2
 Import-Package: org.apache.log4j
