@@ -2,8 +2,20 @@ grammar org.example.expressions.Expressions with org.eclipse.xtext.common.Termin
 
 generate expressions "http://www.example.org/expressions/Expressions"
 
-Model:
-	greetings+=Greeting*;
-	
-Greeting:
-	'Hello' name=ID '!';
+ExpressionsModel:
+	elements+=AbstractElement*;
+
+AbstractElement:
+	Variable | EvalExpression;
+
+Variable:
+	'var' name=ID '=' expression=Expression;
+
+EvalExpression:
+	'eval' expression=Expression;
+
+Expression:
+	{IntConstant} value=INT |
+	{StringConstant} value=STRING |
+	{BoolConstant} value=('true' | 'false') |
+	{VariableRef} variable=[Variable];
