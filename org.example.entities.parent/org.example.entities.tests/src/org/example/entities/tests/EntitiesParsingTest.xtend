@@ -8,23 +8,42 @@ import org.eclipse.xtext.testing.InjectWith
 import org.eclipse.xtext.testing.extensions.InjectionExtension
 import org.eclipse.xtext.testing.util.ParseHelper
 import org.example.entities.entities.Model
+import org.eclipse.xtext.testing.validation.ValidationTestHelper
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.^extension.ExtendWith
+import org.example.entities.entities.EntityType
 
 @ExtendWith(InjectionExtension)
 @InjectWith(EntitiesInjectorProvider)
 class EntitiesParsingTest {
-	@Inject
-	ParseHelper<Model> parseHelper
-	
+
+	@Inject extension ParseHelper<Model>
+	@Inject extension ValidationTestHelper
+
 	@Test
 	def void loadModel() {
-		val result = parseHelper.parse('''
-			Hello Xtext!
-		''')
-		Assertions.assertNotNull(result)
-		val errors = result.eResource.errors
-		Assertions.assertTrue(errors.isEmpty, '''Unexpected errors: «errors.join(", ")»''')
+		val model = '''
+			entity MyEntity {
+				MyEntity attribute;
+			}
+		'''.parse
+
+		val entity = model.entities.get(0)
+		Assertions.assertEquals("MyEntity", entity.name)
+
+		val attribute = entity.attributes.get(0)
+		Assertions.assertEquals("attribute", attribute.name);
+		Assertions.assertEquals("MyEntity", (attribute.type.elementType as EntityType).entity.name);
 	}
+
+	@Test
+	def void testCorrectParsing() {
+		'''
+			entity MyEntity {
+			  MyEntity attribute;
+			}
+		'''.parse.assertNoErrors
+	}
+
 }
