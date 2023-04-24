@@ -3,23 +3,31 @@
  */
 package org.example.expressions.validation
 
+import com.google.inject.Inject
+import org.eclipse.xtext.validation.Check
+import org.example.expressions.ExpressionsModelUtil
+import org.example.expressions.expressions.ExpressionsPackage
+import org.example.expressions.expressions.VariableRef
 
 /**
  * This class contains custom validation rules. 
- *
+ * 
  * See https://www.eclipse.org/Xtext/documentation/303_runtime_concepts.html#validation
  */
 class ExpressionsValidator extends AbstractExpressionsValidator {
-	
-//	public static val INVALID_NAME = 'invalidName'
-//
-//	@Check
-//	def checkGreetingStartsWithCapital(Greeting greeting) {
-//		if (!Character.isUpperCase(greeting.name.charAt(0))) {
-//			warning('Name should start with a capital', 
-//					ExpressionsPackage.Literals.GREETING__NAME,
-//					INVALID_NAME)
-//		}
-//	}
-	
+
+	protected static val ISSUE_CODE_PREFIX = "org.example.expressions."
+	public static val FORWARD_REFERENCE = ISSUE_CODE_PREFIX + "ForwardReference"
+	public static val TYPE_MISMATCH = ISSUE_CODE_PREFIX + "TypeMismatch"
+
+	@Inject extension ExpressionsModelUtil
+
+	@Check
+	def void checkForwardReference(VariableRef varRef) {
+		val variable = varRef.getVariable()
+		if (!varRef.isVariableDefinedBefore)
+			error("variable forward reference not allowed: '" + variable.name + "'",
+				ExpressionsPackage.eINSTANCE.variableRef_Variable, FORWARD_REFERENCE, variable.name)
+	}
+
 }
