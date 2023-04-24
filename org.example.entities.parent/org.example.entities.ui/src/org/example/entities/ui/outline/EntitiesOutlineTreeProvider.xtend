@@ -4,12 +4,25 @@
 package org.example.entities.ui.outline
 
 import org.eclipse.xtext.ui.editor.outline.impl.DefaultOutlineTreeProvider
+import org.eclipse.xtext.ui.editor.outline.impl.DocumentRootNode
+import org.example.entities.entities.Attribute
+import org.example.entities.entities.Model
 
 /**
  * Customization of the default outline structure.
- *
+ * 
  * See https://www.eclipse.org/Xtext/documentation/310_eclipse_support.html#outline
  */
 class EntitiesOutlineTreeProvider extends DefaultOutlineTreeProvider {
+
+	def _isLeaf(Attribute a) {
+		true
+	}
+
+	def void _createChildren(DocumentRootNode outlineNode, Model model) {
+		model.entities.forEach [ entity |
+			createNode(outlineNode, entity);
+		]
+	}
 
 }
