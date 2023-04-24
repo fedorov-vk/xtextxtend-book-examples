@@ -1,2 +1,3 @@
-# xtextxtend-book-examples
-Examples of XtextXtend book, step by step
+# XtextXtend Book Examples
+
+Пошаговое прохождение примеров книги XtextXtend.
