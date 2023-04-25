@@ -39,6 +39,7 @@ class SmallJavaValidator extends AbstractSmallJavaValidator {
 	public static val DUPLICATE_ELEMENT = ISSUE_CODE_PREFIX + "DuplicateElement"
 	public static val INCOMPATIBLE_TYPES = ISSUE_CODE_PREFIX + "IncompatibleTypes"
 	public static val INVALID_ARGS = ISSUE_CODE_PREFIX + "InvalidArgs"
+	public static val WRONG_METHOD_OVERRIDE = ISSUE_CODE_PREFIX + "WrongMethodOverride"
 
 	@Inject extension SmallJavaModelUtil
 	@Inject extension SmallJavaTypeComputer
@@ -133,6 +134,23 @@ class SmallJavaValidator extends AbstractSmallJavaValidator {
 			if (method.params.size != sel.args.size) {
 				error("Invalid number of arguments: expected " + method.params.size + " but was " + sel.args.size,
 					SmallJavaPackage.eINSTANCE.SJMemberSelection_Member, INVALID_ARGS)
+			}
+		}
+	}
+
+	@Check def void checkMethodOverride(SJClass c) {
+		val hierarchyMethods = c.classHierarchyMethods
+
+		for (m : c.methods) {
+			val overridden = hierarchyMethods.get(m.name)
+			if (overridden !== null && (!m.type.isConformant(overridden.type) ||
+				!m.params.map[type].elementsEqual(overridden.params.map[type]))) {
+				error(
+					"The method '" + m.name + "' must override a superclass method",
+					m,
+					SmallJavaPackage.eINSTANCE.SJNamedElement_Name,
+					WRONG_METHOD_OVERRIDE
+				)
 			}
 		}
 	}

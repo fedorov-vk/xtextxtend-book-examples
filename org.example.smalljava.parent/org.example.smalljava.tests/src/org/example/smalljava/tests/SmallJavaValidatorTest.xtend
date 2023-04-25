@@ -272,13 +272,63 @@ class SmallJavaValidatorTest {
 			class A {}
 			class B {}
 			class C {
-				C m(A a, B b) { return this.m(new B()); }
+			  C m(A a, B b) { return this.m(new B()); }
 			}
 		'''.parse.assertError(
 			SmallJavaPackage.eINSTANCE.SJMemberSelection,
 			SmallJavaValidator.INVALID_ARGS,
 			'''Invalid number of arguments: expected 2 but was 1'''
 		)
+	}
+
+	@Test def void testWrongMethodOverride() {
+		'''
+			class A {
+			  A m(A a) { return null; }
+			  B n(A a) { return null; }
+			}
+			
+			class B extends A {
+			  // parameters must have the same type
+			  A m(B a) { return null; }
+			  // return type cannot be a supertype
+			  A n(A a) { return null; }
+			}
+			
+			class C extends A {
+			  // return type can be a subtype
+			  B m(A a) { return null; }
+			}
+		'''.parse => [
+			assertError(
+				SmallJavaPackage.eINSTANCE.SJMethod,
+				SmallJavaValidator.WRONG_METHOD_OVERRIDE,
+				"The method 'm' must override a superclass method"
+			)
+			assertError(
+				SmallJavaPackage.eINSTANCE.SJMethod,
+				SmallJavaValidator.WRONG_METHOD_OVERRIDE,
+				"The method 'n' must override a superclass method"
+			)
+			2.assertEquals(validate.size)
+		]
+	}
+
+	@Test def void testCorrectMethodOverride() {
+		'''
+			class A {
+			  A m(A a) { return null; }
+			}
+			
+			class B extends A {
+			  A m(A a) { return null; }
+			}
+			
+			class C extends A {
+			  // return type can be a subtype
+			  B m(A a) { return null; }
+			}
+		'''.parse.assertNoErrors
 	}
 
 	def private void assertHierarchyCycle(SJProgram p, String expectedClassName) {
