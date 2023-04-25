@@ -6,10 +6,12 @@ package org.example.smalljava.validation
 import com.google.inject.Inject
 import org.eclipse.xtext.validation.Check
 import org.example.smalljava.SmallJavaModelUtil
+import org.example.smalljava.smallJava.SJBlock
 import org.example.smalljava.smallJava.SJClass
 import org.example.smalljava.smallJava.SJField
 import org.example.smalljava.smallJava.SJMemberSelection
 import org.example.smalljava.smallJava.SJMethod
+import org.example.smalljava.smallJava.SJReturn
 import org.example.smalljava.smallJava.SmallJavaPackage
 
 /**
@@ -23,6 +25,7 @@ class SmallJavaValidator extends AbstractSmallJavaValidator {
 	public static val HIERARCHY_CYCLE = ISSUE_CODE_PREFIX + "HierarchyCycle"
 	public static val FIELD_SELECTION_ON_METHOD = ISSUE_CODE_PREFIX + "FieldSelectionOnMethod"
 	public static val METHOD_INVOCATION_ON_FIELD = ISSUE_CODE_PREFIX + "MethodInvocationOnField"
+	public static val UNREACHABLE_CODE = ISSUE_CODE_PREFIX + "UnreachableCode"
 
 	@Inject extension SmallJavaModelUtil
 
@@ -53,4 +56,21 @@ class SmallJavaValidator extends AbstractSmallJavaValidator {
 				FIELD_SELECTION_ON_METHOD
 			)
 	}
+
+	@Check def void checkUnreachableCode(SJBlock block) {
+		val statements = block.statements
+		for (var i = 0; i < statements.length - 1; i++) {
+			if (statements.get(i) instanceof SJReturn) {
+				// put the error on the statement after the return
+				error(
+					"Unreachable code",
+					statements.get(i + 1),
+					null, // EStructuralFeature
+					UNREACHABLE_CODE
+				)
+				return // no need to report further errors
+			}
+		}
+	}
+
 }

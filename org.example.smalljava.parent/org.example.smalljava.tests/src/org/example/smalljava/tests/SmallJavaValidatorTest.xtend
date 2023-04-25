@@ -11,6 +11,8 @@ import org.example.smalljava.validation.SmallJavaValidator
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.^extension.ExtendWith
 
+import static extension org.junit.jupiter.api.Assertions.*
+
 @ExtendWith(InjectionExtension)
 @InjectWith(SmallJavaInjectorProvider)
 class SmallJavaValidatorTest {
@@ -82,6 +84,86 @@ class SmallJavaValidatorTest {
 			  A m() {
 			    A v = this.f;
 			      return this.m();
+			  }
+			}
+		'''.parse.assertNoErrors
+	}
+
+	@Test def void testUnreachableCode() {
+		'''
+			class C {
+			  C m() {
+			    return null;
+			    this.m(); // the error should be placed here
+			  }
+			}
+		'''.parse.assertError(
+			SmallJavaPackage.eINSTANCE.SJMemberSelection,
+			SmallJavaValidator.UNREACHABLE_CODE,
+			"Unreachable code"
+		)
+	}
+
+	@Test def void testUnreachableCode2() {
+		'''
+			class C {
+			  C m() {
+			    return null;
+			    C i = null;
+			    this.m();
+			  }
+			}
+		'''.parse.assertError(
+			SmallJavaPackage.eINSTANCE.SJVariableDeclaration,
+			SmallJavaValidator.UNREACHABLE_CODE,
+			"Unreachable code"
+		)
+	}
+
+	@Test def void testUnreachableCodeOnlyOnce() {
+		'''
+			class C {
+			  C m() {
+			    return null;
+			    C i = null; // error only here
+			    return null;
+			    return null; // no error here
+			  }
+			}
+		'''.parse => [
+			assertError(
+				SmallJavaPackage.eINSTANCE.SJVariableDeclaration,
+				SmallJavaValidator.UNREACHABLE_CODE,
+				"Unreachable code"
+			)
+			1.assertEquals(validate.size)
+		]
+	}
+
+	@Test def void testUnreachableCodeInsideIf() {
+		'''
+			class C {
+			  C m() {
+			    if (true) {
+			      return null;
+			      C i = null;
+			      this.m();
+			    }
+			  }
+			}
+		'''.parse.assertError(
+			SmallJavaPackage.eINSTANCE.SJVariableDeclaration,
+			SmallJavaValidator.UNREACHABLE_CODE,
+			"Unreachable code"
+		)
+	}
+
+	@Test def void testNoUnreachableCode() {
+		'''
+			class C {
+			  C m() {
+			    this.m();
+			    return null;
 			  }
 			}
 		'''.parse.assertNoErrors
