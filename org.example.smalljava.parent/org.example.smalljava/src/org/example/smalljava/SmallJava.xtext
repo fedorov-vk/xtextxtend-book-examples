@@ -14,12 +14,15 @@ SJMember:
 	SJField | SJMethod;
 
 SJField:
-	SJTypedDeclaration ';';
+	access=SJAccessLevel? SJTypedDeclaration ';';
 
 SJMethod:
-	SJTypedDeclaration
+	access=SJAccessLevel? SJTypedDeclaration
 	'(' (params+=SJParameter (',' params+=SJParameter)*)? ')'
 	body=SJBlock;
+
+enum SJAccessLevel:
+	PRIVATE='private' | PROTECTED='protected' | PUBLIC='public';
 
 SJParameter:
 	SJTypedDeclaration;

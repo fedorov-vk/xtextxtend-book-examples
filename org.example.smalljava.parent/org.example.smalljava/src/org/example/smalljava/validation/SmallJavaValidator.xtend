@@ -40,10 +40,13 @@ class SmallJavaValidator extends AbstractSmallJavaValidator {
 	public static val INCOMPATIBLE_TYPES = ISSUE_CODE_PREFIX + "IncompatibleTypes"
 	public static val INVALID_ARGS = ISSUE_CODE_PREFIX + "InvalidArgs"
 	public static val WRONG_METHOD_OVERRIDE = ISSUE_CODE_PREFIX + "WrongMethodOverride"
+	public static val MEMBER_NOT_ACCESSIBLE = ISSUE_CODE_PREFIX + "MemberNotAccessible"
+	public static val REDUCED_ACCESSIBILITY = ISSUE_CODE_PREFIX + "ReducedAccessibility"
 
 	@Inject extension SmallJavaModelUtil
 	@Inject extension SmallJavaTypeComputer
 	@Inject extension SmallJavaTypeConformance
+	@Inject extension SmallJavaAccessibility
 
 	@Check def checkClassHierarchy(SJClass c) {
 		if (c.classHierarchy.contains(c)) {
@@ -151,8 +154,25 @@ class SmallJavaValidator extends AbstractSmallJavaValidator {
 					SmallJavaPackage.eINSTANCE.SJNamedElement_Name,
 					WRONG_METHOD_OVERRIDE
 				)
+			} else if (m.access < overridden.access) {
+				error(
+					"Cannot reduce access from " + overridden.access + " to " + m.access,
+					m,
+					SmallJavaPackage.eINSTANCE.SJMember_Access,
+					REDUCED_ACCESSIBILITY
+				)
 			}
 		}
+	}
+
+	@Check def void checkAccessibility(SJMemberSelection sel) {
+		val member = sel.member
+		if (member.name !== null && !member.isAccessibleFrom(sel))
+			error(
+				'''The «member.access» member «member.name» is not accessible here''',
+				SmallJavaPackage.eINSTANCE.SJMemberSelection_Member,
+				MEMBER_NOT_ACCESSIBLE
+			)
 	}
 
 	def private void checkNoDuplicateElements(Iterable<? extends SJNamedElement> elements, String desc) {

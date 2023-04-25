@@ -1,6 +1,7 @@
 package org.example.smalljava.tests
 
 import com.google.inject.Inject
+import org.eclipse.emf.ecore.EClass
 import org.eclipse.xtext.testing.InjectWith
 import org.eclipse.xtext.testing.extensions.InjectionExtension
 import org.eclipse.xtext.testing.util.ParseHelper
@@ -12,7 +13,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.^extension.ExtendWith
 
 import static extension org.junit.jupiter.api.Assertions.*
-import org.eclipse.emf.ecore.EClass
 
 @ExtendWith(InjectionExtension)
 @InjectWith(SmallJavaInjectorProvider)
@@ -329,6 +329,223 @@ class SmallJavaValidatorTest {
 			  B m(A a) { return null; }
 			}
 		'''.parse.assertNoErrors
+	}
+
+	@Test def void testFieldAccessibility() {
+		'''
+			class A {
+				private A priv;
+				protected A prot;
+				public A pub;
+				A m() {
+					this.priv = null; // private field
+					this.prot = null; // protected field
+					this.pub = null; // public field
+					return null;
+				}
+			}
+			
+			class B extends A {
+				A m() {
+					this.priv = null; // private field ERROR
+					this.prot = null; // protected field
+					this.pub = null; // public field
+					return null;
+				}
+			}
+		'''.parse => [
+			1.assertEquals(validate.size)
+			assertError(
+				SmallJavaPackage.eINSTANCE.SJMemberSelection,
+				SmallJavaValidator.MEMBER_NOT_ACCESSIBLE,
+				"The private member priv is not accessible here"
+			)
+		]
+	}
+
+	@Test def void testFieldAccessibilityInSubclass() {
+		'''
+			class A {
+				private A priv;
+				protected A prot;
+				public A pub;
+				A m() {
+					this.priv = null; // private field
+					this.prot = null; // protected field
+					this.pub = null; // public field
+					return null;
+				}
+			}
+			
+			class C {
+				A m() {
+					(new A()).priv = null; // private field ERROR
+					(new A()).prot = null; // protected field ERROR
+					(new A()).pub = null; // public field
+					return null;
+				}
+			}
+		'''.parse => [
+			2.assertEquals(validate.size)
+			assertError(
+				SmallJavaPackage.eINSTANCE.SJMemberSelection,
+				SmallJavaValidator.MEMBER_NOT_ACCESSIBLE,
+				"The private member priv is not accessible here"
+			)
+			assertError(
+				SmallJavaPackage.eINSTANCE.SJMemberSelection,
+				SmallJavaValidator.MEMBER_NOT_ACCESSIBLE,
+				"The protected member prot is not accessible here"
+			)
+		]
+	}
+
+	@Test def void testMethodAccessibility() {
+		'''
+			class A {
+				private A priv() { return null; }
+				protected A prot() { return null; }
+				public A pub() { return null; }
+				A m() {
+					A a = null;
+					a = this.priv(); // private method
+					a = this.prot(); // protected method
+					a = this.pub(); // public method
+					return null;
+				}
+			}
+			
+			class B extends A {
+				A m() {
+					A a = null;
+					a = this.priv(); // private method ERROR
+					a = this.prot(); // protected method
+					a = this.pub(); // public method
+					return null;
+				}
+			}
+		'''.parse => [
+			1.assertEquals(validate.size)
+			assertError(
+				SmallJavaPackage.eINSTANCE.SJMemberSelection,
+				SmallJavaValidator.MEMBER_NOT_ACCESSIBLE,
+				"The private member priv is not accessible here"
+			)
+		]
+	}
+
+	@Test def void testMethodAccessibilityInSubclass() {
+		'''
+			class A {
+				private A priv() { return null; }
+				protected A prot() { return null; }
+				public A pub() { return null; }
+				A m() {
+					A a = null;
+					a = this.priv(); // private method
+					a = this.prot(); // protected method
+					a = this.pub(); // public method
+					return null;
+				}
+			}
+			
+			class C {
+				A m() {
+					A a = null;
+					a = (new A()).priv(); // private method ERROR
+					a = (new A()).prot(); // protected method ERROR
+					a = (new A()).pub(); // public method
+					return null;
+				}
+			}
+		'''.parse => [
+			2.assertEquals(validate.size)
+			assertError(
+				SmallJavaPackage.eINSTANCE.SJMemberSelection,
+				SmallJavaValidator.MEMBER_NOT_ACCESSIBLE,
+				"The private member priv is not accessible here"
+			)
+			assertError(
+				SmallJavaPackage.eINSTANCE.SJMemberSelection,
+				SmallJavaValidator.MEMBER_NOT_ACCESSIBLE,
+				"The protected member prot is not accessible here"
+			)
+		]
+	}
+
+	@Test def void testUnresolvedMethodAccessibility() {
+		'''
+			class A {
+				A m() {
+					A a = this.foo();
+					return null;
+				}
+			}
+		'''.parse => [
+			// expect only the "Couldn't resolve reference..." error
+			// and no error about accessibility is expected
+			1.assertEquals(validate.size)
+		]
+	}
+
+	@Test def void testReducedAccessibility() {
+		'''
+			class A {
+				public A m() {
+					return null;
+				}
+			}
+			
+			class B extends A {
+				A m() {
+					return null;
+				}
+			}
+		'''.parse.assertError(
+			SmallJavaPackage.eINSTANCE.SJMethod,
+			SmallJavaValidator.REDUCED_ACCESSIBILITY,
+			"Cannot reduce access from public to private"
+		)
+	}
+
+	@Test def void testReducedAccessibility2() {
+		'''
+			class A {
+				protected A m() {
+					return null;
+				}
+			}
+			
+			class B extends A {
+				A m() {
+					return null;
+				}
+			}
+		'''.parse.assertError(
+			SmallJavaPackage.eINSTANCE.SJMethod,
+			SmallJavaValidator.REDUCED_ACCESSIBILITY,
+			"Cannot reduce access from protected to private"
+		)
+	}
+
+	@Test def void testReducedAccessibility3() {
+		'''
+			class A {
+				public A m() {
+					return null;
+				}
+			}
+			
+			class B extends A {
+				protected A m() {
+					return null;
+				}
+			}
+		'''.parse.assertError(
+			SmallJavaPackage.eINSTANCE.SJMethod,
+			SmallJavaValidator.REDUCED_ACCESSIBILITY,
+			"Cannot reduce access from public to protected"
+		)
 	}
 
 	def private void assertHierarchyCycle(SJProgram p, String expectedClassName) {
