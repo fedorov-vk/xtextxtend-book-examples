@@ -5,7 +5,10 @@ package org.example.smalljava.ui.labeling
 
 import com.google.inject.Inject
 import org.eclipse.emf.edit.ui.provider.AdapterFactoryLabelProvider
+import org.eclipse.jface.viewers.StyledString
 import org.eclipse.xtext.ui.label.DefaultEObjectLabelProvider
+import org.example.smalljava.SmallJavaModelUtil
+import org.example.smalljava.smallJava.SJMember
 
 /**
  * Provides labels for EObjects.
@@ -19,13 +22,11 @@ class SmallJavaLabelProvider extends DefaultEObjectLabelProvider {
 		super(delegate);
 	}
 
-	// Labels and icons can be computed like this:
-	
-//	def text(Greeting ele) {
-//		'A greeting to ' + ele.name
-//	}
-//
-//	def image(Greeting ele) {
-//		'Greeting.gif'
-//	}
+	@Inject extension SmallJavaModelUtil
+
+	def text(SJMember m) {
+		new StyledString(m.memberAsString).append(new StyledString(" : " + m.type.name,
+			StyledString.DECORATIONS_STYLER))
+	}
+
 }

@@ -5,6 +5,7 @@ import org.example.smalljava.smallJava.SJClass
 import org.example.smalljava.smallJava.SJField
 import org.example.smalljava.smallJava.SJMethod
 import org.example.smalljava.smallJava.SJReturn
+import org.example.smalljava.smallJava.SJMember
 
 class SmallJavaModelUtil {
 
@@ -42,6 +43,17 @@ class SmallJavaModelUtil {
 		// the one already present in the superclasses
 		// if the methods have the same name
 		c.classHierarchy.toList.reverseView.map[methods].flatten.toMap[name]
+	}
+
+	def memberAsString(SJMember m) {
+		m.name + if (m instanceof SJMethod)
+			"(" + m.params.map[type.name].join(", ") + ")"
+		else
+			""
+	}
+
+	def memberAsStringWithType(SJMember m) {
+		m.memberAsString + " : " + m.type.name
 	}
 
 }
