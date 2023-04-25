@@ -12,6 +12,14 @@ class SmallJavaIndex {
 	@Inject ResourceDescriptionsProvider rdp
 	@Inject IContainer.Manager cm
 
+	def getVisibleExternalClassesDescriptions(EObject o) {
+		val allVisibleClasses = o.getVisibleClassesDescriptions
+		val allExportedClasses = o.getExportedClassesEObjectDescriptions
+		val difference = allVisibleClasses.toSet
+		difference.removeAll(allExportedClasses.toSet)
+		return difference.toMap[qualifiedName]
+	}
+
 	def getVisibleEObjectDescriptions(EObject o, EClass type) {
 		o.getVisibleContainers.map [ container |
 			container.getExportedObjectsByType(type)

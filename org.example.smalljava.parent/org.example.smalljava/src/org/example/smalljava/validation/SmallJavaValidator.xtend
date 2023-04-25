@@ -5,10 +5,14 @@ package org.example.smalljava.validation
 
 import com.google.common.collect.HashMultimap
 import com.google.inject.Inject
+import org.eclipse.xtext.naming.IQualifiedNameProvider
 import org.eclipse.xtext.validation.Check
+import org.eclipse.xtext.validation.CheckType
 import org.example.smalljava.SmallJavaModelUtil
+import org.example.smalljava.scoping.SmallJavaIndex
 import org.example.smalljava.smallJava.SJBlock
 import org.example.smalljava.smallJava.SJClass
+import org.example.smalljava.smallJava.SJExpression
 import org.example.smalljava.smallJava.SJField
 import org.example.smalljava.smallJava.SJMemberSelection
 import org.example.smalljava.smallJava.SJMethod
@@ -17,11 +21,10 @@ import org.example.smalljava.smallJava.SJProgram
 import org.example.smalljava.smallJava.SJReturn
 import org.example.smalljava.smallJava.SJVariableDeclaration
 import org.example.smalljava.smallJava.SmallJavaPackage
-
-import static extension org.eclipse.xtext.EcoreUtil2.*
 import org.example.smalljava.typing.SmallJavaTypeComputer
 import org.example.smalljava.typing.SmallJavaTypeConformance
-import org.example.smalljava.smallJava.SJExpression
+
+import static extension org.eclipse.xtext.EcoreUtil2.*
 
 /**
  * This class contains custom validation rules. 
@@ -42,11 +45,14 @@ class SmallJavaValidator extends AbstractSmallJavaValidator {
 	public static val WRONG_METHOD_OVERRIDE = ISSUE_CODE_PREFIX + "WrongMethodOverride"
 	public static val MEMBER_NOT_ACCESSIBLE = ISSUE_CODE_PREFIX + "MemberNotAccessible"
 	public static val REDUCED_ACCESSIBILITY = ISSUE_CODE_PREFIX + "ReducedAccessibility"
+	public static val DUPLICATE_CLASS = ISSUE_CODE_PREFIX + "DuplicateClass"
 
 	@Inject extension SmallJavaModelUtil
 	@Inject extension SmallJavaTypeComputer
 	@Inject extension SmallJavaTypeConformance
 	@Inject extension SmallJavaAccessibility
+	@Inject extension SmallJavaIndex
+	@Inject extension IQualifiedNameProvider
 
 	@Check def checkClassHierarchy(SJClass c) {
 		if (c.classHierarchy.contains(c)) {
@@ -173,6 +179,23 @@ class SmallJavaValidator extends AbstractSmallJavaValidator {
 				SmallJavaPackage.eINSTANCE.SJMemberSelection_Member,
 				MEMBER_NOT_ACCESSIBLE
 			)
+	}
+
+	// perform this check only on file save
+	@Check(CheckType.NORMAL)
+	def checkDuplicateClassesInFiles(SJProgram p) {
+		val externalClasses = p.getVisibleExternalClassesDescriptions
+		for (c : p.classes) {
+			val className = c.fullyQualifiedName
+			if (externalClasses.containsKey(className)) {
+				error(
+					"The type " + c.name + " is already defined",
+					c,
+					SmallJavaPackage.eINSTANCE.SJNamedElement_Name,
+					DUPLICATE_CLASS
+				)
+			}
+		}
 	}
 
 	def private void checkNoDuplicateElements(Iterable<? extends SJNamedElement> elements, String desc) {
