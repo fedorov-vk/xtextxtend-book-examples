@@ -28,6 +28,8 @@ class SmallJavaTypeComputer {
 	public static val BOOLEAN_TYPE = factory.createSJClass => [name = 'booleanType']
 	public static val NULL_TYPE = factory.createSJClass => [name = 'nullType']
 
+	static val ep = SmallJavaPackage.eINSTANCE
+
 	def SJClass typeFor(SJExpression e) {
 		switch (e) {
 			SJNew: e.type
@@ -44,6 +46,30 @@ class SmallJavaTypeComputer {
 
 	def isPrimitive(SJClass c) {
 		c.eResource === null
+	}
+
+	def expectedType(SJExpression e) {
+		val c = e.eContainer
+		val f = e.eContainingFeature
+		switch (c) {
+			SJVariableDeclaration:
+				c.type
+			SJAssignment case f == ep.SJAssignment_Right:
+				typeFor(c.left)
+			SJReturn:
+				c.getContainerOfType(SJMethod).type
+			case f == ep.SJIfStatement_Expression:
+				BOOLEAN_TYPE
+			SJMemberSelection case f == ep.SJMemberSelection_Args: {
+				// assume that it refers to a method and that there
+				// is a parameter corresponding to the argument
+				try {
+					(c.member as SJMethod).params.get(c.args.indexOf(e)).type
+				} catch (Throwable t) {
+					null // otherwise there is no specific expected type
+				}
+			}
+		}
 	}
 
 }
