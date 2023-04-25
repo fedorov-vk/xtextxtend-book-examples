@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.^extension.ExtendWith
 
 import static extension org.junit.jupiter.api.Assertions.*
+import org.example.smalljava.smallJava.SJVariableDeclaration
 
 @ExtendWith(InjectionExtension)
 @InjectWith(SmallJavaInjectorProvider)
@@ -34,9 +35,28 @@ class SmallJavaScopeProviderTest {
 			}
 			class A {}
 		'''.parse.classes.head.methods.last.returnStatement.expression => [
-			// THIS WILL FAIL when we customize scoping in the next sections
 			assertScope(SmallJavaPackage.eINSTANCE.SJMemberSelection_Member, "f, m, C.f, C.m")
-			assertScope(SmallJavaPackage.eINSTANCE.SJSymbolRef_Symbol, "p, v, m.p, m.v, C.m.p, C.m.v")
+			assertScope(SmallJavaPackage.eINSTANCE.SJSymbolRef_Symbol, "v, p")
+		]
+	}
+
+	@Test def void testScopeProviderForSymbols() {
+		'''
+			class C {
+			  A m(A p) {
+			    A v1 = null;
+			    if (true) {
+			      A v2 = null;
+			      A v3 = null;
+			    }
+			    A v4 = null;
+			    return null;
+			  }
+			}
+			class A {}
+		'''.parse.classes.head.methods.last.body.eAllContents.filter(SJVariableDeclaration) => [
+			findFirst[name == 'v3'].expression.assertScope(SmallJavaPackage.eINSTANCE.SJSymbolRef_Symbol, "v2, v1, p")
+			findFirst[name == 'v4'].expression.assertScope(SmallJavaPackage.eINSTANCE.SJSymbolRef_Symbol, "v1, p")
 		]
 	}
 

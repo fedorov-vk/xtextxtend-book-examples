@@ -3,6 +3,14 @@
  */
 package org.example.smalljava.scoping
 
+import org.eclipse.emf.ecore.EObject
+import org.eclipse.emf.ecore.EReference
+import org.eclipse.xtext.scoping.IScope
+import org.eclipse.xtext.scoping.Scopes
+import org.example.smalljava.smallJava.SJBlock
+import org.example.smalljava.smallJava.SJMethod
+import org.example.smalljava.smallJava.SJVariableDeclaration
+import org.example.smalljava.smallJava.SmallJavaPackage
 
 /**
  * This class contains custom scoping description.
@@ -11,5 +19,29 @@ package org.example.smalljava.scoping
  * on how and when to use it.
  */
 class SmallJavaScopeProvider extends AbstractSmallJavaScopeProvider {
+
+	val epackage = SmallJavaPackage.eINSTANCE
+
+	override getScope(EObject context, EReference reference) {
+		if (reference == epackage.SJSymbolRef_Symbol) {
+			return scopeForSymbolRef(context)
+		}
+		return super.getScope(context, reference)
+	}
+
+	def protected IScope scopeForSymbolRef(EObject context) {
+		val container = context.eContainer
+		return switch (container) {
+			SJMethod:
+				Scopes.scopeFor(container.params)
+			SJBlock:
+				Scopes.scopeFor(
+					container.statements.takeWhile[it != context].filter(SJVariableDeclaration),
+					scopeForSymbolRef(container) // outer scope
+				)
+			default:
+				scopeForSymbolRef(container)
+		}
+	}
 
 }
