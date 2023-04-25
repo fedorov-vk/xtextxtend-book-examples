@@ -7,6 +7,9 @@ import com.google.inject.Inject
 import org.eclipse.xtext.validation.Check
 import org.example.smalljava.SmallJavaModelUtil
 import org.example.smalljava.smallJava.SJClass
+import org.example.smalljava.smallJava.SJField
+import org.example.smalljava.smallJava.SJMemberSelection
+import org.example.smalljava.smallJava.SJMethod
 import org.example.smalljava.smallJava.SmallJavaPackage
 
 /**
@@ -16,8 +19,10 @@ import org.example.smalljava.smallJava.SmallJavaPackage
  */
 class SmallJavaValidator extends AbstractSmallJavaValidator {
 
-	protected static val ISSUE_CODE_PREFIX = "org.example.smalljava.";
-	public static val HIERARCHY_CYCLE = ISSUE_CODE_PREFIX + "HierarchyCycle";
+	protected static val ISSUE_CODE_PREFIX = "org.example.smalljava."
+	public static val HIERARCHY_CYCLE = ISSUE_CODE_PREFIX + "HierarchyCycle"
+	public static val FIELD_SELECTION_ON_METHOD = ISSUE_CODE_PREFIX + "FieldSelectionOnMethod"
+	public static val METHOD_INVOCATION_ON_FIELD = ISSUE_CODE_PREFIX + "MethodInvocationOnField"
 
 	@Inject extension SmallJavaModelUtil
 
@@ -32,4 +37,20 @@ class SmallJavaValidator extends AbstractSmallJavaValidator {
 		}
 	}
 
+	@Check def void checkMemberSelection(SJMemberSelection sel) {
+		val member = sel.member
+
+		if (member instanceof SJField && sel.methodinvocation)
+			error(
+				'''Method invocation on a field''',
+				SmallJavaPackage.eINSTANCE.SJMemberSelection_Methodinvocation,
+				METHOD_INVOCATION_ON_FIELD
+			)
+		else if (member instanceof SJMethod && !sel.methodinvocation)
+			error(
+				'''Field selection on a method''',
+				SmallJavaPackage.eINSTANCE.SJMemberSelection_Member,
+				FIELD_SELECTION_ON_METHOD
+			)
+	}
 }
