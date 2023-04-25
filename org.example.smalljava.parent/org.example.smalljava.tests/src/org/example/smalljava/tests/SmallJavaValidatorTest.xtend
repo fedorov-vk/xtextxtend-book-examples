@@ -1,7 +1,9 @@
 package org.example.smalljava.tests
 
 import com.google.inject.Inject
+import com.google.inject.Provider
 import org.eclipse.emf.ecore.EClass
+import org.eclipse.emf.ecore.resource.ResourceSet
 import org.eclipse.xtext.testing.InjectWith
 import org.eclipse.xtext.testing.extensions.InjectionExtension
 import org.eclipse.xtext.testing.util.ParseHelper
@@ -20,6 +22,7 @@ class SmallJavaValidatorTest {
 
 	@Inject extension ParseHelper<SJProgram>
 	@Inject extension ValidationTestHelper
+	@Inject Provider<ResourceSet> resourceSetProvider;
 
 	@Test def void testClassHierarchyCycle() {
 		'''
@@ -486,6 +489,25 @@ class SmallJavaValidatorTest {
 			// and no error about accessibility is expected
 			1.assertEquals(validate.size)
 		]
+	}
+
+	@Test def void testTwoFiles() {
+		val resourceSet = resourceSetProvider.get
+		val first = '''class B extends A {}'''.parse(resourceSet)
+		val second = '''class A { B b; }'''.parse(resourceSet)
+		first.assertNoErrors
+		second.assertNoErrors
+
+		second.classes.head.assertSame(first.classes.head.superclass)
+	}
+
+	@Test def void testTwoFilesAlternative() {
+		val first = '''class B extends A {}'''.parse
+		val second = '''class A { B b; } '''.parse(first.eResource.resourceSet)
+		first.assertNoErrors
+		second.assertNoErrors
+
+		second.classes.head.assertSame(first.classes.head.superclass)
 	}
 
 	@Test def void testReducedAccessibility() {
