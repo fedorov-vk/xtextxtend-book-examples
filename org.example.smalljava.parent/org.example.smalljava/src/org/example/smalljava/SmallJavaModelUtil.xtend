@@ -1,13 +1,16 @@
 package org.example.smalljava
 
+import com.google.inject.Inject
 import org.example.smalljava.smallJava.SJBlock
 import org.example.smalljava.smallJava.SJClass
 import org.example.smalljava.smallJava.SJField
+import org.example.smalljava.smallJava.SJMember
 import org.example.smalljava.smallJava.SJMethod
 import org.example.smalljava.smallJava.SJReturn
-import org.example.smalljava.smallJava.SJMember
 
 class SmallJavaModelUtil {
+
+	@Inject extension SmallJavaLib
 
 	def fields(SJClass c) {
 		c.members.filter(SJField)
@@ -33,6 +36,10 @@ class SmallJavaModelUtil {
 			visited.add(current)
 			current = current.superclass
 		}
+
+		val object = c.getSmallJavaObjectClass
+		if (object !== null)
+			visited.add(object)
 
 		visited
 	}
