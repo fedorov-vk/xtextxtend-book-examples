@@ -11,6 +11,10 @@ import org.example.smalljava.smallJava.SJBlock
 import org.example.smalljava.smallJava.SJMethod
 import org.example.smalljava.smallJava.SJVariableDeclaration
 import org.example.smalljava.smallJava.SmallJavaPackage
+import org.example.smalljava.smallJava.SJMemberSelection
+import com.google.inject.Inject
+import org.example.smalljava.SmallJavaModelUtil
+import org.example.smalljava.typing.SmallJavaTypeComputer
 
 /**
  * This class contains custom scoping description.
@@ -21,10 +25,14 @@ import org.example.smalljava.smallJava.SmallJavaPackage
 class SmallJavaScopeProvider extends AbstractSmallJavaScopeProvider {
 
 	val epackage = SmallJavaPackage.eINSTANCE
+	@Inject extension SmallJavaModelUtil
+	@Inject extension SmallJavaTypeComputer
 
 	override getScope(EObject context, EReference reference) {
 		if (reference == epackage.SJSymbolRef_Symbol) {
 			return scopeForSymbolRef(context)
+		} else if (context instanceof SJMemberSelection) {
+			return scopeForMemberSelection(context)
 		}
 		return super.getScope(context, reference)
 	}
@@ -41,6 +49,29 @@ class SmallJavaScopeProvider extends AbstractSmallJavaScopeProvider {
 				)
 			default:
 				scopeForSymbolRef(container)
+		}
+	}
+
+	def protected IScope scopeForMemberSelection(SJMemberSelection sel) {
+		val type = sel.receiver.typeFor
+
+		if (type === null || type.isPrimitive)
+			return IScope.NULLSCOPE
+
+		val grouped = type.classHierarchyMembers.groupBy[it instanceof SJMethod]
+		val inheritedMethods = grouped.get(true) ?: emptyList
+		val inheritedFields = grouped.get(false) ?: emptyList
+
+		if (sel.methodinvocation) {
+			return Scopes.scopeFor(
+				type.methods + type.fields,
+				Scopes.scopeFor(inheritedMethods + inheritedFields)
+			)
+		} else {
+			return Scopes.scopeFor(
+				type.fields + type.methods,
+				Scopes.scopeFor(inheritedFields + inheritedMethods)
+			)
 		}
 	}
 

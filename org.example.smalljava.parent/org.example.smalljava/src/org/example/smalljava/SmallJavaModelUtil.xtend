@@ -45,6 +45,10 @@ class SmallJavaModelUtil {
 		c.classHierarchy.toList.reverseView.map[methods].flatten.toMap[name]
 	}
 
+	def classHierarchyMembers(SJClass c) {
+		c.classHierarchy.map[members].flatten
+	}
+
 	def memberAsString(SJMember m) {
 		m.name + if (m instanceof SJMethod)
 			"(" + m.params.map[type.name].join(", ") + ")"
