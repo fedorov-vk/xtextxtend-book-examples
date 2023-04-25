@@ -3,6 +3,7 @@
  */
 package org.example.smalljava.validation
 
+import com.google.common.collect.HashMultimap
 import com.google.inject.Inject
 import org.eclipse.xtext.validation.Check
 import org.example.smalljava.SmallJavaModelUtil
@@ -11,8 +12,13 @@ import org.example.smalljava.smallJava.SJClass
 import org.example.smalljava.smallJava.SJField
 import org.example.smalljava.smallJava.SJMemberSelection
 import org.example.smalljava.smallJava.SJMethod
+import org.example.smalljava.smallJava.SJNamedElement
+import org.example.smalljava.smallJava.SJProgram
 import org.example.smalljava.smallJava.SJReturn
+import org.example.smalljava.smallJava.SJVariableDeclaration
 import org.example.smalljava.smallJava.SmallJavaPackage
+
+import static extension org.eclipse.xtext.EcoreUtil2.*
 
 /**
  * This class contains custom validation rules. 
@@ -26,6 +32,8 @@ class SmallJavaValidator extends AbstractSmallJavaValidator {
 	public static val FIELD_SELECTION_ON_METHOD = ISSUE_CODE_PREFIX + "FieldSelectionOnMethod"
 	public static val METHOD_INVOCATION_ON_FIELD = ISSUE_CODE_PREFIX + "MethodInvocationOnField"
 	public static val UNREACHABLE_CODE = ISSUE_CODE_PREFIX + "UnreachableCode"
+	public static val MISSING_FINAL_RETURN = ISSUE_CODE_PREFIX + "MissingFinalReturn"
+	public static val DUPLICATE_ELEMENT = ISSUE_CODE_PREFIX + "DuplicateElement"
 
 	@Inject extension SmallJavaModelUtil
 
@@ -69,6 +77,51 @@ class SmallJavaValidator extends AbstractSmallJavaValidator {
 					UNREACHABLE_CODE
 				)
 				return // no need to report further errors
+			}
+		}
+	}
+
+	@Check
+	def void checkMethodEndsWithReturn(SJMethod method) {
+		if (method.returnStatement === null) {
+			error(
+				"Method must end with a return statement",
+				SmallJavaPackage.eINSTANCE.SJMethod_Body,
+				MISSING_FINAL_RETURN
+			)
+		}
+	}
+
+	@Check def void checkNoDuplicateClasses(SJProgram p) {
+		checkNoDuplicateElements(p.classes, "class")
+	}
+
+	@Check def void checkNoDuplicateMembers(SJClass c) {
+		checkNoDuplicateElements(c.fields, "field")
+		checkNoDuplicateElements(c.methods, "method")
+	}
+
+	@Check def void checkNoDuplicateSymbols(SJMethod m) {
+		checkNoDuplicateElements(m.params, "parameter")
+		checkNoDuplicateElements(m.body.getAllContentsOfType(SJVariableDeclaration), "variable")
+	}
+
+	def private void checkNoDuplicateElements(Iterable<? extends SJNamedElement> elements, String desc) {
+		val multiMap = HashMultimap.create()
+
+		for (e : elements)
+			multiMap.put(e.name, e)
+
+		for (entry : multiMap.asMap.entrySet) {
+			val duplicates = entry.value
+			if (duplicates.size > 1) {
+				for (d : duplicates)
+					error(
+						"Duplicate " + desc + " '" + d.name + "'",
+						d,
+						SmallJavaPackage.eINSTANCE.SJNamedElement_Name,
+						DUPLICATE_ELEMENT
+					)
 			}
 		}
 	}

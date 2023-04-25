@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.^extension.ExtendWith
 
 import static extension org.junit.jupiter.api.Assertions.*
+import org.eclipse.emf.ecore.EClass
 
 @ExtendWith(InjectionExtension)
 @InjectWith(SmallJavaInjectorProvider)
@@ -169,12 +170,101 @@ class SmallJavaValidatorTest {
 		'''.parse.assertNoErrors
 	}
 
+	@Test def void testMissingFinalReturn() {
+		'''
+			class C {
+			  C m() {
+			    this.m();
+			  }
+			}
+		'''.parse.assertError(
+			SmallJavaPackage.eINSTANCE.SJMethod,
+			SmallJavaValidator.MISSING_FINAL_RETURN,
+			"Method must end with a return statement"
+		)
+	}
+
+	@Test def void testDuplicateClasses() {
+		'''
+			class C {}
+			class C {}
+		'''.toString.assertDuplicate(SmallJavaPackage.eINSTANCE.SJClass, "class", "C")
+	}
+
+	@Test def void testDuplicateFields() {
+		'''
+			class C {
+			  C f;
+			  C f;
+			}
+		'''.toString.assertDuplicate(SmallJavaPackage.eINSTANCE.SJField, "field", "f")
+	}
+
+	@Test def void testDuplicateMethods() {
+		'''
+			class C {
+			  C m() { return null; }
+			  C m() { return null; }
+			}
+		'''.toString.assertDuplicate(SmallJavaPackage.eINSTANCE.SJMethod, "method", "m")
+	}
+
+	@Test def void testDuplicateParams() {
+		'''
+			class C {
+			  C m(C p, C p) { return null; }
+			}
+		'''.toString.assertDuplicate(SmallJavaPackage.eINSTANCE.SJParameter, "parameter", "p")
+	}
+
+	@Test def void testDuplicateVariables() {
+		'''
+			class C {
+			  C m() {
+			    C v = null;
+			    if (true)
+			      C v = null;
+			    return null;
+			  }
+			}
+		'''.toString.assertDuplicate(SmallJavaPackage.eINSTANCE.SJVariableDeclaration, "variable", "v")
+	}
+
+	@Test def void testFieldAndMethodWithTheSameNameAreOK() {
+		'''
+			class C {
+			  C f;
+			  C f() { return null; }
+			}
+		'''.parse.assertNoErrors
+	}
+
 	def private void assertHierarchyCycle(SJProgram p, String expectedClassName) {
 		p.assertError(
 			SmallJavaPackage.eINSTANCE.SJClass,
 			SmallJavaValidator.HIERARCHY_CYCLE,
 			"cycle in hierarchy of class '" + expectedClassName + "'"
 		)
+	}
+
+	def private void assertDuplicate(String input, EClass type, String desc, String name) {
+		input.parse => [
+			// check that the error is on both duplicates
+			assertError(
+				type,
+				SmallJavaValidator.DUPLICATE_ELEMENT,
+				input.indexOf(name),
+				name.length,
+				"Duplicate " + desc + " '" + name + "'"
+			)
+			assertError(
+				type,
+				SmallJavaValidator.DUPLICATE_ELEMENT,
+				input.lastIndexOf(name),
+				name.length,
+				"Duplicate " + desc + " '" + name + "'"
+			)
+		]
 	}
 
 }
