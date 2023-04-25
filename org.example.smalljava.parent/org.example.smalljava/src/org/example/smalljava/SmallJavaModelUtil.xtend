@@ -37,6 +37,7 @@ class SmallJavaModelUtil {
 			current = current.superclass
 		}
 
+		// new part
 		val object = c.getSmallJavaObjectClass
 		if (object !== null)
 			visited.add(object)
