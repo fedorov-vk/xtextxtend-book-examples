@@ -3,9 +3,23 @@
  */
 package org.example.smalljava
 
+import com.google.inject.Binder
+import com.google.inject.name.Names
+import org.eclipse.xtext.scoping.IScopeProvider
+import org.eclipse.xtext.scoping.impl.AbstractDeclarativeScopeProvider
+import org.example.smalljava.scoping.SmallJavaImportedNamespaceAwareLocalScopeProvider
 
 /**
  * Use this class to register components to be used at runtime / without the Equinox extension registry.
  */
 class SmallJavaRuntimeModule extends AbstractSmallJavaRuntimeModule {
+
+	override void configureIScopeProviderDelegate(Binder binder) {
+		binder.bind(IScopeProvider).annotatedWith(
+			Names.named(AbstractDeclarativeScopeProvider.NAMED_DELEGATE)
+		).to(
+			SmallJavaImportedNamespaceAwareLocalScopeProvider
+		)
+	}
+
 }
