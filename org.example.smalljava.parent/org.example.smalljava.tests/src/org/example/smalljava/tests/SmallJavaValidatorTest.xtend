@@ -510,6 +510,49 @@ class SmallJavaValidatorTest {
 		second.classes.head.assertSame(first.classes.head.superclass)
 	}
 
+	@Test def void testPackagesAndClassQualifiedNames() {
+		val first = '''
+			package my.first.pack;
+			class B extends my.second.pack.A {}
+		'''.parse
+		val second = '''
+			package my.second.pack;
+			class A {
+			  my.first.pack.B b;
+			}
+		'''.parse(first.eResource.resourceSet)
+		first.assertNoErrors
+		second.assertNoErrors
+
+		second.classes.head.assertSame(first.classes.head.superclass)
+	}
+
+	@Test def void testImports() {
+		val first = '''
+			package my.first.pack;
+			class C1 { }
+			class C2 { }
+		'''.parse
+
+		'''
+			package my.second.pack;
+			class D1 { }
+			class D2 { }
+		'''.parse(first.eResource.resourceSet)
+
+		'''
+			package my.third.pack;
+			import my.first.pack.C1;
+			import my.second.pack.*;
+			
+			class E extends C1 { // C1 is imported
+			  my.first.pack.C2 c; // C2 not imported, but fully qualified
+			  D1 d1; // D1 imported by wildcard
+			  D2 d2; // D2 imported by wildcard
+			}
+		'''.parse(first.eResource.resourceSet).assertNoErrors
+	}
+
 	@Test def void testReducedAccessibility() {
 		'''
 			class A {

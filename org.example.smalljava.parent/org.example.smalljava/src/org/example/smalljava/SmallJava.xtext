@@ -3,10 +3,21 @@ grammar org.example.smalljava.SmallJava with org.eclipse.xtext.common.Terminals
 generate smallJava "http://www.example.org/smalljava/SmallJava"
 
 SJProgram:
+	('package' name=QualifiedName ';')?
+	imports+=SJImport*
 	classes+=SJClass*;
 
+SJImport:
+	'import' importedNamespace=QualifiedNameWithWildcard ';';
+
+QualifiedName:
+	ID ('.' ID)*;
+
+QualifiedNameWithWildcard:
+	QualifiedName '.*'?;
+
 SJClass:
-	'class' name=ID ('extends' superclass=[SJClass])? '{'
+	'class' name=ID ('extends' superclass=[SJClass|QualifiedName])? '{'
 		members+=SJMember*
 	'}';
 
@@ -54,7 +65,7 @@ SJSymbol:
 	SJVariableDeclaration | SJParameter;
 
 fragment SJTypedDeclaration *:
-	type=[SJClass] name=ID;
+	type=[SJClass|QualifiedName] name=ID;
 
 SJNamedElement:
 	SJClass | SJMember | SJSymbol;
@@ -83,5 +94,5 @@ SJTerminalExpression returns SJExpression:
 	{SJThis} 'this' |
 	{SJNull} 'null' |
 	{SJSymbolRef} symbol=[SJSymbol] |
-	{SJNew} 'new' type=[SJClass] '(' ')' |
+	{SJNew} 'new' type=[SJClass|QualifiedName] '(' ')' |
 	'(' SJExpression ')';
