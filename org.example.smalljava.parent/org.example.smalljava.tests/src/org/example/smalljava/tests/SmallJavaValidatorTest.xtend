@@ -239,6 +239,48 @@ class SmallJavaValidatorTest {
 		'''.parse.assertNoErrors
 	}
 
+	@Test def void testVariableDeclExpIncompatibleTypes() {
+		"A v = new C();".assertIncompatibleTypes(SmallJavaPackage.eINSTANCE.SJNew, "A", "C")
+	}
+
+	@Test def void testReturnExpIncompatibleTypes() {
+		"return new C();".assertIncompatibleTypes(SmallJavaPackage.eINSTANCE.SJNew, "A", "C")
+	}
+
+	@Test def void testArgExpIncompatibleTypes() {
+		"this.m(new C());".assertIncompatibleTypes(SmallJavaPackage.eINSTANCE.SJNew, "A", "C")
+	}
+
+	@Test def void testIfExpressionIncompatibleTypes() {
+		"if (new C()) { return null; } ".assertIncompatibleTypes(
+			SmallJavaPackage.eINSTANCE.SJNew,
+			"booleanType",
+			"C"
+		)
+	}
+
+	@Test def void testAssignmentIncompatibleTypes() {
+		"A v = null; v = new C();".assertIncompatibleTypes(
+			SmallJavaPackage.eINSTANCE.SJNew,
+			"A",
+			"C"
+		)
+	}
+
+	@Test def void testInvalidNumberOfArgs() {
+		'''
+			class A {}
+			class B {}
+			class C {
+				C m(A a, B b) { return this.m(new B()); }
+			}
+		'''.parse.assertError(
+			SmallJavaPackage.eINSTANCE.SJMemberSelection,
+			SmallJavaValidator.INVALID_ARGS,
+			'''Invalid number of arguments: expected 2 but was 1'''
+		)
+	}
+
 	def private void assertHierarchyCycle(SJProgram p, String expectedClassName) {
 		p.assertError(
 			SmallJavaPackage.eINSTANCE.SJClass,
@@ -265,6 +307,24 @@ class SmallJavaValidatorTest {
 				"Duplicate " + desc + " '" + name + "'"
 			)
 		]
+	}
+
+	def private void assertIncompatibleTypes(CharSequence methodBody, EClass c, String expectedType,
+		String actualType) {
+		'''
+			class A {}
+			class B extends A {}
+			class C {
+			  A f;
+			  A m(A p) {
+			    «methodBody»
+			  }
+			}
+		'''.parse.assertError(
+			c,
+			SmallJavaValidator.INCOMPATIBLE_TYPES,
+			"Incompatible types. Expected '" + expectedType + "' but was '" + actualType + "'"
+		)
 	}
 
 }

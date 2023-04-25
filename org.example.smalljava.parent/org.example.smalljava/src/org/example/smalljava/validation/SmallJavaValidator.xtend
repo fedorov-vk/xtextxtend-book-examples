@@ -19,6 +19,9 @@ import org.example.smalljava.smallJava.SJVariableDeclaration
 import org.example.smalljava.smallJava.SmallJavaPackage
 
 import static extension org.eclipse.xtext.EcoreUtil2.*
+import org.example.smalljava.typing.SmallJavaTypeComputer
+import org.example.smalljava.typing.SmallJavaTypeConformance
+import org.example.smalljava.smallJava.SJExpression
 
 /**
  * This class contains custom validation rules. 
@@ -34,8 +37,12 @@ class SmallJavaValidator extends AbstractSmallJavaValidator {
 	public static val UNREACHABLE_CODE = ISSUE_CODE_PREFIX + "UnreachableCode"
 	public static val MISSING_FINAL_RETURN = ISSUE_CODE_PREFIX + "MissingFinalReturn"
 	public static val DUPLICATE_ELEMENT = ISSUE_CODE_PREFIX + "DuplicateElement"
+	public static val INCOMPATIBLE_TYPES = ISSUE_CODE_PREFIX + "IncompatibleTypes"
+	public static val INVALID_ARGS = ISSUE_CODE_PREFIX + "InvalidArgs"
 
 	@Inject extension SmallJavaModelUtil
+	@Inject extension SmallJavaTypeComputer
+	@Inject extension SmallJavaTypeConformance
 
 	@Check def checkClassHierarchy(SJClass c) {
 		if (c.classHierarchy.contains(c)) {
@@ -104,6 +111,30 @@ class SmallJavaValidator extends AbstractSmallJavaValidator {
 	@Check def void checkNoDuplicateSymbols(SJMethod m) {
 		checkNoDuplicateElements(m.params, "parameter")
 		checkNoDuplicateElements(m.body.getAllContentsOfType(SJVariableDeclaration), "variable")
+	}
+
+	@Check def void checkConformance(SJExpression exp) {
+		val actualType = exp.typeFor
+		val expectedType = exp.expectedType
+		if (expectedType === null || actualType === null)
+			return; // nothing to check
+		if (!actualType.isConformant(expectedType)) {
+			error(
+				"Incompatible types. Expected '" + expectedType.name + "' but was '" + actualType.name + "'",
+				null,
+				INCOMPATIBLE_TYPES
+			);
+		}
+	}
+
+	@Check def void checkMethodInvocationArguments(SJMemberSelection sel) {
+		val method = sel.member
+		if (method instanceof SJMethod) {
+			if (method.params.size != sel.args.size) {
+				error("Invalid number of arguments: expected " + method.params.size + " but was " + sel.args.size,
+					SmallJavaPackage.eINSTANCE.SJMemberSelection_Member, INVALID_ARGS)
+			}
+		}
 	}
 
 	def private void checkNoDuplicateElements(Iterable<? extends SJNamedElement> elements, String desc) {
