@@ -1,10 +1,8 @@
 package org.example.smalljava
 
-import com.google.inject.Inject
 import org.example.smalljava.smallJava.SJBlock
 import org.example.smalljava.smallJava.SJClass
 import org.example.smalljava.smallJava.SJField
-import org.example.smalljava.smallJava.SJMember
 import org.example.smalljava.smallJava.SJMethod
 import org.example.smalljava.smallJava.SJReturn
 
@@ -24,6 +22,18 @@ class SmallJavaModelUtil {
 
 	def returnStatement(SJBlock block) {
 		block.statements.filter(SJReturn).head
+	}
+
+	def classHierarchy(SJClass c) {
+		val visited = newLinkedHashSet()
+
+		var current = c.superclass
+		while (current !== null && !visited.contains(current)) {
+			visited.add(current)
+			current = current.superclass
+		}
+
+		visited
 	}
 
 }
