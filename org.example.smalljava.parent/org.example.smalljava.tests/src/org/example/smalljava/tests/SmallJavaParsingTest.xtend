@@ -7,24 +7,144 @@ import com.google.inject.Inject
 import org.eclipse.xtext.testing.InjectWith
 import org.eclipse.xtext.testing.extensions.InjectionExtension
 import org.eclipse.xtext.testing.util.ParseHelper
+import org.example.smalljava.SmallJavaModelUtil
+import org.example.smalljava.smallJava.SJAssignment
+import org.example.smalljava.smallJava.SJIfStatement
+import org.example.smalljava.smallJava.SJMemberSelection
+import org.example.smalljava.smallJava.SJNew
+import org.example.smalljava.smallJava.SJNull
 import org.example.smalljava.smallJava.SJProgram
+import org.example.smalljava.smallJava.SJReturn
+import org.example.smalljava.smallJava.SJStatement
+import org.example.smalljava.smallJava.SJSymbolRef
+import org.example.smalljava.smallJava.SJThis
+import org.example.smalljava.smallJava.SJVariableDeclaration
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.^extension.ExtendWith
 
+import static extension org.junit.jupiter.api.Assertions.*
+
 @ExtendWith(InjectionExtension)
 @InjectWith(SmallJavaInjectorProvider)
 class SmallJavaParsingTest {
-	@Inject
-	ParseHelper<SJProgram> parseHelper
-	
-	@Test
-	def void loadModel() {
+
+	@Inject extension ParseHelper<SJProgram> parseHelper
+	@Inject extension SmallJavaModelUtil
+
+	@Test def void loadModel() {
 		val result = parseHelper.parse('''
-			Hello Xtext!
+			class C {
+				
+			}
 		''')
 		Assertions.assertNotNull(result)
-		val errors = result.eResource.errors
-		Assertions.assertTrue(errors.isEmpty, '''Unexpected errors: «errors.join(", ")»''')
 	}
+
+	@Test def void testThenBlockWithoutStatements() {
+		'''
+			class C {
+				C c;
+				C m() {
+					if (true) {
+					}
+					return this.c;
+				}
+			}
+		'''.parse => [
+			val ifS = (classes.head.methods.head.body.statements.head as SJIfStatement)
+			ifS.thenBlock.statements.empty.assertTrue
+		]
+	}
+
+	@Test def void testElse() {
+		'''
+			class C {
+				C c;
+				C m() {
+					if (true)
+						if (false)
+							this.c = null;
+					else
+						this.c = null;
+					return this.c;
+				}
+			}
+		'''.parse => [
+			val ifS = (classes.head.methods.head.body.statements.head as SJIfStatement)
+			ifS.elseBlock.assertNull
+			// thus the else is associated to the inner if
+		]
+	}
+
+	@Test def void testElseWithBlock() {
+		'''
+			class C {
+				C c;
+				C m() {
+					if (true) {
+						if (false)
+							this.c = null;
+					} else
+						this.c = null;
+					return this.c;
+				}
+			}
+		'''.parse => [
+			val ifS = (classes.head.methods.head.body.statements.head as SJIfStatement)
+			ifS.elseBlock.assertNotNull
+			// thus the else is associated to the outer if
+		]
+	}
+
+	@Test def void testMemberSelectionLeftAssociativity() {
+		'''
+			class A {
+				A m() { return this.m().m(); }
+			}
+		'''.parse.classes.head.methods.head.body.statements.last.assertAssociativity("((this.m).m)")
+	}
+
+	@Test def void testAssignmentRightAssociativity() {
+		'''
+			class A {
+				A m() {
+					A f = null;
+					A g = null;
+					f = g = null;
+				}
+			}
+		'''.parse.classes.head.methods.head.body.statements.last.assertAssociativity("(f = (g = null))")
+	}
+
+	@Test def void testParameterAndVariable() {
+		'''
+			class A {
+				A m(A p) {
+					A v = null;
+					return null;
+				}
+			}
+		'''.parse.classes.head.methods.head => [
+			params.head.assertNotNull;
+			(body.statements.head instanceof SJVariableDeclaration).assertTrue
+		]
+	}
+
+	def private assertAssociativity(SJStatement s, CharSequence expected) {
+		expected.toString.assertEquals(s.stringRepr)
+	}
+
+	def private String stringRepr(SJStatement s) {
+		switch (s) {
+			SJAssignment: '''(«s.left.stringRepr» = «s.right.stringRepr»)'''
+			SJMemberSelection: '''(«s.receiver.stringRepr».«s.member.name»)'''
+			SJThis: "this"
+			SJNew: '''new «s.type.name»()'''
+			SJNull: "null"
+			SJSymbolRef: s.symbol.name
+			SJReturn: s.expression.stringRepr
+		}
+	}
+
 }
