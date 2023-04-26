@@ -553,6 +553,20 @@ class SmallJavaValidatorTest {
 		'''.parse(first.eResource.resourceSet).assertNoErrors
 	}
 
+	@Test def void testWrongSuperUsage() {
+		'''
+			class C {
+			  C m() {
+			    return super;
+			  }
+			}
+		'''.parse.assertError(
+			SmallJavaPackage.eINSTANCE.SJSuper,
+			SmallJavaValidator.WRONG_SUPER_USAGE,
+			"'super' can be used only as member selection receiver"
+		)
+	}
+
 	@Test def void testReducedAccessibility() {
 		'''
 			class A {

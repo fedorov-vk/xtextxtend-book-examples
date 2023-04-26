@@ -25,6 +25,7 @@ import org.example.smalljava.smallJava.SJProgram
 import org.example.smalljava.smallJava.SJReturn
 import org.example.smalljava.smallJava.SJStatement
 import org.example.smalljava.smallJava.SJStringConstant
+import org.example.smalljava.smallJava.SJSuper
 import org.example.smalljava.smallJava.SJSymbolRef
 import org.example.smalljava.smallJava.SJThis
 import org.example.smalljava.smallJava.SJVariableDeclaration
@@ -121,6 +122,8 @@ class SmallJavaGenerator extends AbstractGenerator {
 				"null"
 			SJThis:
 				"this"
+			SJSuper:
+				"super"
 			SJSymbolRef:
 				s.symbol.name
 			SJNew:

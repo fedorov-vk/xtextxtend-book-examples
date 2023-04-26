@@ -92,6 +92,7 @@ SJTerminalExpression returns SJExpression:
 	{SJIntConstant} value=INT |
 	{SJBoolConstant} value=('true' | 'false') |
 	{SJThis} 'this' |
+	{SJSuper} 'super' |
 	{SJNull} 'null' |
 	{SJSymbolRef} symbol=[SJSymbol] |
 	{SJNew} 'new' type=[SJClass|QualifiedName] '(' ')' |

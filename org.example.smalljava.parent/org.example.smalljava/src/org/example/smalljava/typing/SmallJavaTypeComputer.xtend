@@ -1,6 +1,7 @@
 package org.example.smalljava.typing
 
 import com.google.inject.Inject
+import org.example.smalljava.SmallJavaLib
 import org.example.smalljava.smallJava.SJAssignment
 import org.example.smalljava.smallJava.SJBoolConstant
 import org.example.smalljava.smallJava.SJClass
@@ -12,6 +13,7 @@ import org.example.smalljava.smallJava.SJNew
 import org.example.smalljava.smallJava.SJNull
 import org.example.smalljava.smallJava.SJReturn
 import org.example.smalljava.smallJava.SJStringConstant
+import org.example.smalljava.smallJava.SJSuper
 import org.example.smalljava.smallJava.SJSymbolRef
 import org.example.smalljava.smallJava.SJThis
 import org.example.smalljava.smallJava.SJVariableDeclaration
@@ -30,6 +32,8 @@ class SmallJavaTypeComputer {
 
 	static val ep = SmallJavaPackage.eINSTANCE
 
+	@Inject extension SmallJavaLib
+
 	def SJClass typeFor(SJExpression e) {
 		switch (e) {
 			SJNew: e.type
@@ -37,11 +41,16 @@ class SmallJavaTypeComputer {
 			SJMemberSelection: e.member.type
 			SJAssignment: e.left.typeFor
 			SJThis: e.getContainerOfType(SJClass)
+			SJSuper: e.getContainerOfType(SJClass).getSuperclassOrObject
 			SJNull: NULL_TYPE
 			SJStringConstant: STRING_TYPE
 			SJIntConstant: INT_TYPE
 			SJBoolConstant: BOOLEAN_TYPE
 		}
+	}
+
+	def getSuperclassOrObject(SJClass c) {
+		c.superclass ?: getSmallJavaObjectClass(c)
 	}
 
 	def isPrimitive(SJClass c) {

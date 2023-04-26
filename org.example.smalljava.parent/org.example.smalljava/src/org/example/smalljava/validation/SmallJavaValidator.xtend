@@ -19,6 +19,7 @@ import org.example.smalljava.smallJava.SJMethod
 import org.example.smalljava.smallJava.SJNamedElement
 import org.example.smalljava.smallJava.SJProgram
 import org.example.smalljava.smallJava.SJReturn
+import org.example.smalljava.smallJava.SJSuper
 import org.example.smalljava.smallJava.SJVariableDeclaration
 import org.example.smalljava.smallJava.SmallJavaPackage
 import org.example.smalljava.typing.SmallJavaTypeComputer
@@ -44,6 +45,7 @@ class SmallJavaValidator extends AbstractSmallJavaValidator {
 	public static val INVALID_ARGS = ISSUE_CODE_PREFIX + "InvalidArgs"
 	public static val WRONG_METHOD_OVERRIDE = ISSUE_CODE_PREFIX + "WrongMethodOverride"
 	public static val MEMBER_NOT_ACCESSIBLE = ISSUE_CODE_PREFIX + "MemberNotAccessible"
+	public static val WRONG_SUPER_USAGE = ISSUE_CODE_PREFIX + "WrongSuperUsage"
 	public static val REDUCED_ACCESSIBILITY = ISSUE_CODE_PREFIX + "ReducedAccessibility"
 	public static val DUPLICATE_CLASS = ISSUE_CODE_PREFIX + "DuplicateClass"
 
@@ -196,6 +198,15 @@ class SmallJavaValidator extends AbstractSmallJavaValidator {
 				)
 			}
 		}
+	}
+
+	@Check def void checkSuper(SJSuper s) {
+		if (s.eContainingFeature != SmallJavaPackage.eINSTANCE.SJMemberSelection_Receiver)
+			error(
+				"'super' can be used only as member selection receiver",
+				null,
+				WRONG_SUPER_USAGE
+			)
 	}
 
 	def private void checkNoDuplicateElements(Iterable<? extends SJNamedElement> elements, String desc) {
