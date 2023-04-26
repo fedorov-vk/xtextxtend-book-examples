@@ -5,9 +5,11 @@ package org.example.smalljava
 
 import com.google.inject.Binder
 import com.google.inject.name.Names
+import org.eclipse.xtext.resource.IDefaultResourceDescriptionStrategy
 import org.eclipse.xtext.scoping.IScopeProvider
 import org.eclipse.xtext.scoping.impl.AbstractDeclarativeScopeProvider
 import org.example.smalljava.scoping.SmallJavaImportedNamespaceAwareLocalScopeProvider
+import org.example.smalljava.scoping.SmallJavaResourceDescriptionsStrategy
 
 /**
  * Use this class to register components to be used at runtime / without the Equinox extension registry.
@@ -20,6 +22,10 @@ class SmallJavaRuntimeModule extends AbstractSmallJavaRuntimeModule {
 		).to(
 			SmallJavaImportedNamespaceAwareLocalScopeProvider
 		)
+	}
+
+	def Class<? extends IDefaultResourceDescriptionStrategy> bindIDefaultResourceDescriptionStrategy() {
+		return SmallJavaResourceDescriptionsStrategy;
 	}
 
 }
