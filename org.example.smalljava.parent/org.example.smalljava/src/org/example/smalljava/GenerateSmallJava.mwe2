@@ -52,6 +52,10 @@ Workflow {
 			junitSupport = {
 				junitVersion = "5"
 			}
+			projectWizard = {
+				generate = true
+				generateToolbarButton = true
+			}
 		}
 	}
 }

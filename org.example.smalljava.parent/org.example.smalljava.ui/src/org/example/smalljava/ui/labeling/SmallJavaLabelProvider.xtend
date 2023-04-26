@@ -8,7 +8,10 @@ import org.eclipse.emf.edit.ui.provider.AdapterFactoryLabelProvider
 import org.eclipse.jface.viewers.StyledString
 import org.eclipse.xtext.ui.label.DefaultEObjectLabelProvider
 import org.example.smalljava.SmallJavaModelUtil
+import org.example.smalljava.smallJava.SJClass
+import org.example.smalljava.smallJava.SJField
 import org.example.smalljava.smallJava.SJMember
+import org.example.smalljava.smallJava.SJMethod
 
 /**
  * Provides labels for EObjects.
@@ -27,6 +30,18 @@ class SmallJavaLabelProvider extends DefaultEObjectLabelProvider {
 	def text(SJMember m) {
 		new StyledString(m.memberAsString).append(new StyledString(" : " + m.type.name,
 			StyledString.DECORATIONS_STYLER))
+	}
+
+	def image(SJMethod m) {
+		"methpub_obj.gif"
+	}
+
+	def image(SJField f) {
+		"field_public_obj.gif"
+	}
+
+	def image(SJClass c) {
+		"sj_class_obj.gif"
 	}
 
 }
