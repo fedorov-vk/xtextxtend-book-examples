@@ -8,6 +8,7 @@ import org.eclipse.xtext.testing.InjectWith
 import org.eclipse.xtext.testing.extensions.InjectionExtension
 import org.eclipse.xtext.testing.util.ParseHelper
 import org.eclipse.xtext.testing.validation.ValidationTestHelper
+import org.example.smalljava.SmallJavaLib
 import org.example.smalljava.smallJava.SJProgram
 import org.example.smalljava.smallJava.SmallJavaPackage
 import org.example.smalljava.validation.SmallJavaValidator
@@ -22,6 +23,7 @@ class SmallJavaValidatorTest {
 
 	@Inject extension ParseHelper<SJProgram>
 	@Inject extension ValidationTestHelper
+	@Inject extension SmallJavaLib
 	@Inject Provider<ResourceSet> resourceSetProvider;
 
 	@Test def void testClassHierarchyCycle() {
@@ -553,6 +555,147 @@ class SmallJavaValidatorTest {
 		'''.parse(first.eResource.resourceSet).assertNoErrors
 	}
 
+	@Test def void testDuplicateClassesInFiles() {
+		val first = '''
+		package my.first.pack;
+		
+		class C {}'''.parse
+
+		'''
+			package my.first.pack;
+			class D {}
+			class C {}
+		'''.parse(first.eResource.resourceSet).assertError(
+			SmallJavaPackage.eINSTANCE.SJClass,
+			SmallJavaValidator.DUPLICATE_CLASS,
+			"The type C is already defined"
+		)
+
+		first.assertError(
+			SmallJavaPackage.eINSTANCE.SJClass,
+			SmallJavaValidator.DUPLICATE_CLASS,
+			"The type C is already defined"
+		)
+	}
+
+	@Test def void testClassesWithSameNameButWithDifferentQNAreOK() {
+		val first = '''
+		package my.first.pack;
+		
+		class C {}'''.parse
+
+		'''
+			package my.second.pack;
+			class C {}
+		'''.parse(first.eResource.resourceSet).assertNoErrors
+	}
+
+	@Test def void testStringConformance() {
+		'''
+			class A {
+				String m() { return "foo"; }
+			}
+		'''.parse(loadLibInResourceSet).assertNoErrors
+	}
+
+	@Test def void testIntConformance() {
+		'''
+			class A {
+				Integer m() { return 10; }
+			}
+		'''.parse(loadLibInResourceSet).assertNoErrors
+	}
+
+	@Test def void testBooleanConformance() {
+		'''
+			class A {
+				Boolean m() { return true; }
+			}
+		'''.parse(loadLibInResourceSet).assertNoErrors
+	}
+
+	@Test def void testBooleanAcceptedByIfStatement() {
+		'''
+			class A {
+				A m() {
+					if (new Boolean()) {
+						return null;
+					}
+					return null;
+				}
+			}
+		'''.parse(loadLibInResourceSet).assertNoErrors
+	}
+
+	@Test def void testEveryClassExtendsObject() {
+		'''
+			class A {
+				Object m() {
+					return new A();
+				}
+			}
+		'''.parse(loadLibInResourceSet).assertNoErrors
+	}
+
+	@Test def void testStringConformantToObject() {
+		'''
+			class A {
+				Object m() {
+					return "a";
+				}
+			}
+		'''.parse(loadLibInResourceSet).assertNoErrors
+	}
+
+	@Test def void testAccessToExplicitlyInheritedObject() {
+		'''
+			class A extends Object {
+				Object m(Object o) {
+					Object c = this.clone();
+					return this.toString();
+				}
+			}
+		'''.parse(loadLibInResourceSet).assertNoErrors
+	}
+
+	@Test def void testAccessToImplictlyInheritedObject() {
+		'''
+			class A {
+				Object m(Object o) {
+					Object c = this.clone();
+					return this.toString();
+				}
+			}
+		'''.parse(loadLibInResourceSet).assertNoErrors
+	}
+
+	@Test def void testWrongMethodOverrideWithLibrary() {
+		'''
+			class A {
+				Object toString() {
+					return null;
+				}
+			}
+		'''.parse(loadLibInResourceSet) => [
+			assertError(
+				SmallJavaPackage.eINSTANCE.SJMethod,
+				SmallJavaValidator.WRONG_METHOD_OVERRIDE,
+				"The method 'toString' must override a superclass method"
+			)
+			1.assertEquals(validate.size)
+		]
+	}
+
+	@Test def void testCorrectMethodOverrideWithLibrary() {
+		'''
+			class A {
+				public String toString() {
+					return null;
+				}
+			}
+		'''.parse(loadLibInResourceSet).assertNoErrors
+	}
+
 	@Test def void testWrongSuperUsage() {
 		'''
 			class C {
@@ -565,6 +708,32 @@ class SmallJavaValidatorTest {
 			SmallJavaValidator.WRONG_SUPER_USAGE,
 			"'super' can be used only as member selection receiver"
 		)
+	}
+
+	@Test def void testCanAccessToSuper() {
+		'''
+			class A {
+				String m() {
+					return null;
+				}
+			}
+			
+			class B extends A {
+				String m() {
+					return super.toString();
+				}
+			}
+		'''.parse(loadLibInResourceSet).assertNoErrors
+	}
+
+	@Test def void testCanAccessToSuperWithLibrary() {
+		'''
+			class A {
+				public String toString() {
+					return super.toString();
+				}
+			}
+		'''.parse(loadLibInResourceSet).assertNoErrors
 	}
 
 	@Test def void testReducedAccessibility() {
@@ -671,6 +840,10 @@ class SmallJavaValidatorTest {
 			SmallJavaValidator.INCOMPATIBLE_TYPES,
 			"Incompatible types. Expected '" + expectedType + "' but was '" + actualType + "'"
 		)
+	}
+
+	def private loadLibInResourceSet() {
+		resourceSetProvider.get => [loadLib]
 	}
 
 }

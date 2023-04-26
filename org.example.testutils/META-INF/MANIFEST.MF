@@ -1,0 +1,22 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Testutils
+Bundle-SymbolicName: org.example.testutils
+Bundle-Vendor: Lorenzo Bettini
+Bundle-Version: 1.0.0.qualifier
+Automatic-Module-Name: org.example.testutils
+Bundle-RequiredExecutionEnvironment: JavaSE-17
+Require-Bundle: com.google.guava,
+ org.eclipse.xtext.xbase.lib,
+ org.eclipse.xtend.lib,
+ org.eclipse.xtend.lib.macro,
+ com.google.inject,
+ org.eclipse.xtext.ui,
+ org.eclipse.jdt.core,
+ org.eclipse.pde.core,
+ org.eclipse.xtext.ui.testing,
+ junit-jupiter-api;bundle-version="5.9.1"
+Import-Package: org.junit.jupiter.api;version="[5.1.0,6.0.0)",
+ org.junit.jupiter.api.extension;version="[5.1.0,6.0.0)"
+Export-Package: org.example.testutils
+

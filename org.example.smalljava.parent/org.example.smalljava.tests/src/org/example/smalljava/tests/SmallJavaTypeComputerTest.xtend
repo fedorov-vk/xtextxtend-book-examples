@@ -5,9 +5,14 @@ import org.eclipse.xtext.testing.InjectWith
 import org.eclipse.xtext.testing.extensions.InjectionExtension
 import org.eclipse.xtext.testing.util.ParseHelper
 import org.example.smalljava.SmallJavaModelUtil
+import org.example.smalljava.smallJava.SJAssignment
 import org.example.smalljava.smallJava.SJExpression
+import org.example.smalljava.smallJava.SJIfStatement
+import org.example.smalljava.smallJava.SJMemberSelection
 import org.example.smalljava.smallJava.SJProgram
+import org.example.smalljava.smallJava.SJReturn
 import org.example.smalljava.smallJava.SJStatement
+import org.example.smalljava.smallJava.SJVariableDeclaration
 import org.example.smalljava.typing.SmallJavaTypeComputer
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.^extension.ExtendWith
@@ -98,6 +103,64 @@ class SmallJavaTypeComputerTest {
 		]
 	}
 
+	@Test def void testVarDeclExpectedType() {
+		('''V v = null;'''.testStatements.head as SJVariableDeclaration).expression.assertExpectedType("V")
+	}
+
+	@Test def void testAssignmentRightExpectedType() {
+		('''this.f = null;'''.testStatements.head as SJAssignment).right.assertExpectedType("F")
+	}
+
+	@Test def void testAssignmentLeftExpectedType() {
+		('''this.f = null;'''.testStatements.head as SJAssignment).left.expectedType.assertNull
+	}
+
+	@Test def void testReturnExpectedType() {
+		("".testStatements.last as SJReturn).expression.assertExpectedType("R")
+	}
+
+	@Test def void testIfExpressionExpectedType() {
+		("if (e) {}".testStatements.head as SJIfStatement).expression.assertExpectedType("booleanType")
+	}
+
+	@Test def void testMethodInvocationArgsExpectedType() {
+		("this.m(new P1(), new P2());".testStatements.head as SJMemberSelection).args => [
+			get(0).assertExpectedType("P1")
+			get(1).assertExpectedType("P2")
+		]
+	}
+
+	@Test def void testMethodInvocationReceiverExpectedType() {
+		("this.m();".testStatements.head as SJMemberSelection).receiver.expectedType.assertNull
+	}
+
+	@Test def void testStandaloneMemberSelectionExpectedType() {
+		// a standalone method invocation has no expected type
+		'''
+			class A {
+				A a;
+				A m() { this.a; this.m(); return null; }
+			}
+		'''.parse => [
+			classes.head.methods.head.body.statements => [
+				(get(0) as SJExpression).expectedType.assertNull;
+				(get(1) as SJExpression).expectedType.assertNull
+			]
+		]
+	}
+
+	@Test def void testWrongMethodInvocationArgsExpectedType() {
+		// method n does not exist
+		("this.n(new P1(), new P2());".testStatements.head as SJMemberSelection).args => [
+			get(0).expectedType.assertNull
+			get(1).expectedType.assertNull
+		]
+
+		// too many arguments
+		("this.m(new P1(), new P2(), new P1());".testStatements.head as SJMemberSelection).args.get(2).expectedType.
+			assertNull
+	}
+
 	def private assertType(CharSequence testExp, String expectedClassName) {
 		'''
 			class R { }
@@ -124,6 +187,28 @@ class SmallJavaTypeComputerTest {
 
 	def private statementExpressionType(SJStatement s) {
 		(s as SJExpression).typeFor
+	}
+
+	def private testStatements(CharSequence statement) {
+		'''
+			class R {  }
+			class P1 {  }
+			class P2 {  }
+			class V {  }
+			class F {  }
+			
+			class C {
+				F f;
+				R m(P1 p1, P2 p2) {
+					«statement»
+					return null;
+				}
+			}
+		'''.parse.classes.last.methods.last.body.statements
+	}
+
+	def private assertExpectedType(SJExpression exp, String expectedClassName) {
+		expectedClassName.assertEquals(exp.expectedType.name)
 	}
 
 }

@@ -1,16 +1,14 @@
 package org.example.smalljava.tests
 
-import org.eclipse.xtext.testing.extensions.InjectionExtension
 import com.google.inject.Inject
 import com.google.inject.Provider
 import org.eclipse.emf.ecore.resource.ResourceSet
 import org.eclipse.xtext.testing.InjectWith
-import org.eclipse.xtext.testing.XtextRunner
+import org.eclipse.xtext.testing.extensions.InjectionExtension
 import org.eclipse.xtext.testing.util.ParseHelper
 import org.eclipse.xtext.testing.validation.ValidationTestHelper
 import org.example.smalljava.SmallJavaLib
 import org.example.smalljava.smallJava.SJProgram
-
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.^extension.ExtendWith
 
@@ -30,9 +28,25 @@ class SmallJavaLibTest {
 			class C extends Object {
 			  String s;
 			  Integer i;
-			  Object m(Object o) { return null; }
-			  }
+			  Object m(Boolean o) { return null; }
+			}
 		'''.loadLibAndParse.assertNoErrors
+	}
+
+	@Test def void testLibraryContainsNoError() {
+		val resourceSet = rsp.get
+		loadLib(resourceSet)
+		resourceSet.resources.head.contents.head.assertNoErrors
+	}
+
+	@Test def void testSmallJavaObjectWithoutLibraryLoaded() {
+		val context = '''class C {}'''.parse
+		getSmallJavaObjectClass(context).assertNull
+	}
+
+	@Test def void testSmallJavaObjectWithLibraryLoaded() {
+		val context = loadLibAndParse('''class C {}''')
+		getSmallJavaObjectClass(context).assertNotNull
 	}
 
 	def private loadLibAndParse(CharSequence p) {

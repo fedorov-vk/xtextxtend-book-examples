@@ -27,5 +27,6 @@ Export-Package: org.example.smalljava,
  org.example.smalljava.smallJava.impl,
  org.example.smalljava.smallJava.util,
  org.example.smalljava.typing,
- org.example.smalljava.validation
+ org.example.smalljava.validation,
+ smalljava.lang
 Import-Package: org.apache.log4j

@@ -8,6 +8,7 @@ import org.eclipse.xtext.testing.InjectWith
 import org.eclipse.xtext.testing.extensions.InjectionExtension
 import org.eclipse.xtext.testing.util.ParseHelper
 import org.example.smalljava.SmallJavaModelUtil
+import org.example.smalljava.smallJava.SJAccessLevel
 import org.example.smalljava.smallJava.SJAssignment
 import org.example.smalljava.smallJava.SJIfStatement
 import org.example.smalljava.smallJava.SJMemberSelection
@@ -131,6 +132,23 @@ class SmallJavaParsingTest {
 		]
 	}
 
+	@Test def void testAccessLevel() {
+		'''
+		class C { } 
+		
+		class D extends C {
+			C c1; // default to private
+			public C c2;
+			private C c3;
+			protected C c4;
+		}'''.parse => [
+			assertAccessLevel(0, SJAccessLevel.PRIVATE)
+			assertAccessLevel(1, SJAccessLevel.PUBLIC)
+			assertAccessLevel(2, SJAccessLevel.PRIVATE)
+			assertAccessLevel(3, SJAccessLevel.PROTECTED)
+		]
+	}
+
 	def private assertAssociativity(SJStatement s, CharSequence expected) {
 		expected.toString.assertEquals(s.stringRepr)
 	}
@@ -145,6 +163,10 @@ class SmallJavaParsingTest {
 			SJSymbolRef: s.symbol.name
 			SJReturn: s.expression.stringRepr
 		}
+	}
+
+	def private assertAccessLevel(SJProgram p, int memberIndex, SJAccessLevel access) {
+		access.assertEquals(p.classes.last.members.get(memberIndex).access)
 	}
 
 }

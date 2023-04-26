@@ -11,5 +11,6 @@ Require-Bundle: org.example.smalljava,
  org.eclipse.xtext.xbase.ide,
  org.antlr.runtime;bundle-version="[3.2.0,3.2.1)"
 Bundle-RequiredExecutionEnvironment: JavaSE-17
-Export-Package: org.example.smalljava.ide.contentassist.antlr.internal,
- org.example.smalljava.ide.contentassist.antlr
+Export-Package: org.example.smalljava.ide,
+ org.example.smalljava.ide.contentassist.antlr,
+ org.example.smalljava.ide.contentassist.antlr.internal
