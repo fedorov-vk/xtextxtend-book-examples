@@ -28,5 +28,6 @@ Export-Package: org.example.xbase.entities,
  org.example.xbase.entities.validation,
  org.example.xbase.entities.services,
  org.example.xbase.entities.entities,
- org.example.xbase.entities.parser.antlr
+ org.example.xbase.entities.parser.antlr,
+ org.example.xbase.entities.formatting2
 Import-Package: org.apache.log4j
