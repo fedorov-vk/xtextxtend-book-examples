@@ -1,4 +1,5 @@
-grammar org.example.xbase.entities.Entities with org.eclipse.xtext.xbase.Xbase
+grammar org.example.xbase.entities.Entities
+	with org.eclipse.xtext.xbase.annotations.XbaseWithAnnotations
 
 generate entities "http://www.example.org/xbase/entities/Entities"
 
@@ -7,6 +8,7 @@ Model:
 	entities+=Entity*;
 
 Entity:
+	annotations+=XAnnotation*
 	'entity' name=ID ('extends' superType=JvmParameterizedTypeReference)?
 	'{'
 	attributes+=Attribute*
@@ -14,6 +16,7 @@ Entity:
 	'}';
 
 Attribute:
+	annotations+=XAnnotation*
 	'attr' (type=JvmTypeReference)? name=ID
 	('=' initexpression=XExpression)? ';';
 

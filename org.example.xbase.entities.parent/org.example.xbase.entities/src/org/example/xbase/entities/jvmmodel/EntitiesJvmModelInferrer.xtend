@@ -4,7 +4,9 @@
 package org.example.xbase.entities.jvmmodel
 
 import com.google.inject.Inject
+import org.eclipse.xtext.common.types.JvmAnnotationTarget
 import org.eclipse.xtext.common.types.JvmDeclaredType
+import org.eclipse.xtext.xbase.annotations.xAnnotations.XAnnotation
 import org.eclipse.xtext.xbase.jvmmodel.AbstractModelInferrer
 import org.eclipse.xtext.xbase.jvmmodel.IJvmDeclaredTypeAcceptor
 import org.eclipse.xtext.xbase.jvmmodel.JvmTypesBuilder
@@ -51,9 +53,11 @@ class EntitiesJvmModelInferrer extends AbstractModelInferrer {
 			documentation = entity.documentation
 			if (entity.superType !== null)
 				superTypes += entity.superType.cloneWithProxies
+			translateAnnotations(entity.annotations)
 			for (a : entity.attributes) {
 				val type = a.type ?: a.initexpression?.inferredType
 				members += a.toField(a.name, type) [
+					translateAnnotations(a.annotations)
 					documentation = a.documentation
 					if (a.initexpression !== null)
 						initializer = a.initexpression
@@ -82,4 +86,9 @@ class EntitiesJvmModelInferrer extends AbstractModelInferrer {
 			]
 		]
 	}
+
+	def private void translateAnnotations(JvmAnnotationTarget target, Iterable<XAnnotation> annotations) {
+		target.addAnnotations(annotations.filterNull.filter[annotationType !== null])
+	}
+
 }
