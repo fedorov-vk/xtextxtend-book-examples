@@ -61,6 +61,25 @@ class EntitiesJvmModelInferrer extends AbstractModelInferrer {
 				members += a.toGetter(a.name, type)
 				members += a.toSetter(a.name, type)
 			}
+			for (op : entity.operations) {
+				members += op.toMethod(op.name, op.type ?: inferredType) [
+					documentation = op.documentation
+					for (p : op.params) {
+						parameters += p.toParameter(p.name, p.parameterType)
+					}
+					body = op.body
+				]
+			}
+			members += entity.toMethod("toString", typeRef(String)) [
+				body = '''
+					return
+						"entity «entity.name» {\n" +
+							«FOR a : entity.attributes»
+								"\t«a.name» = " + «a.name».toString() + "\n" +
+							«ENDFOR»
+						"}";
+				'''
+			]
 		]
 	}
 }

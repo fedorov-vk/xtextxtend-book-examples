@@ -9,8 +9,15 @@ Entity:
 	'entity' name=ID ('extends' superType=JvmParameterizedTypeReference)?
 	'{'
 	attributes+=Attribute*
+	operations+=Operation*
 	'}';
 
 Attribute:
 	'attr' (type=JvmTypeReference)? name=ID
 	('=' initexpression=XExpression)? ';';
+
+Operation:
+	'op' (type=JvmTypeReference)? name=ID
+	'(' (params+=FullJvmFormalParameter (','
+	params+=FullJvmFormalParameter)*)? ')'
+	body=XBlockExpression;
