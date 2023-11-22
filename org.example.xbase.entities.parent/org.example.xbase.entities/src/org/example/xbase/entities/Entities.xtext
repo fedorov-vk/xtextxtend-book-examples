@@ -1,0 +1,16 @@
+grammar org.example.xbase.entities.Entities with org.eclipse.xtext.xbase.Xbase
+
+generate entities "http://www.example.org/xbase/entities/Entities"
+
+Model:
+	entities+=Entity*;
+
+Entity:
+	'entity' name=ID ('extends' superType=JvmParameterizedTypeReference)?
+	'{'
+	attributes+=Attribute*
+	'}';
+
+Attribute:
+	'attr' (type=JvmTypeReference)? name=ID
+	('=' initexpression=XExpression)? ';';
