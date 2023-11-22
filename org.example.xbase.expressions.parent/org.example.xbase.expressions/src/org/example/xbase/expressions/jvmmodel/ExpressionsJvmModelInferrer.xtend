@@ -4,14 +4,15 @@
 package org.example.xbase.expressions.jvmmodel
 
 import com.google.inject.Inject
-import org.eclipse.xtext.xbase.XBlockExpression
+import org.eclipse.xtext.common.types.JvmDeclaredType
 import org.eclipse.xtext.xbase.jvmmodel.AbstractModelInferrer
 import org.eclipse.xtext.xbase.jvmmodel.IJvmDeclaredTypeAcceptor
 import org.eclipse.xtext.xbase.jvmmodel.JvmTypesBuilder
+import org.example.xbase.expressions.expressions.ExpressionsModel
 
 /**
  * <p>Infers a JVM model from the source model.</p>
- *
+ * 
  * <p>The JVM model should contain all elements that would appear in the Java code
  * which is generated from the source model. Other models link against the JVM model rather than the source model.</p>
  */
@@ -25,14 +26,14 @@ class ExpressionsJvmModelInferrer extends AbstractModelInferrer {
 	/**
 	 * The dispatch method {@code infer} is called for each instance of the
 	 * given element's type that is contained in a resource.
-	 *
+	 * 
 	 * @param element
 	 *            the model to create one or more
-	 *            {@link org.eclipse.xtext.common.types.JvmDeclaredType declared
+	 *            {@link JvmDeclaredType declared
 	 *            types} from.
 	 * @param acceptor
 	 *            each created
-	 *            {@link org.eclipse.xtext.common.types.JvmDeclaredType type}
+	 *            {@link JvmDeclaredType type}
 	 *            without a container should be passed to the acceptor in order
 	 *            get attached to the current resource. The acceptor's
 	 *            {@link IJvmDeclaredTypeAcceptor#accept(org.eclipse.xtext.common.types.JvmDeclaredType)
@@ -45,18 +46,17 @@ class ExpressionsJvmModelInferrer extends AbstractModelInferrer {
 	 *            rely on linking using the index if isPreIndexingPhase is
 	 *            <code>true</code>.
 	 */
-	def dispatch void infer(XBlockExpression element, IJvmDeclaredTypeAcceptor acceptor, boolean isPreIndexingPhase) {
-		// Here you explain how your model is mapped to Java elements, by writing the actual translation code.
-		
-		// An implementation for the initial hello world example could look like this:
-//		acceptor.accept(element.toClass("my.company.greeting.MyGreetings")) [
-//			for (greeting : element.greetings) {
-//				members += greeting.toMethod("hello" + greeting.name, typeRef(String)) [
-//					body = '''
-//						return "Hello «greeting.name»";
-//					'''
-//				]
-//			}
-//		]
+	def dispatch void infer(ExpressionsModel element, IJvmDeclaredTypeAcceptor acceptor, boolean isPreIndexingPhase) {
+		val className = element.eResource.URI.trimFileExtension.lastSegment
+		acceptor.accept(element.toClass(className)) [
+			members += element.toMethod('main', typeRef(Void.TYPE)) [
+				// add a parameter String[] args
+				parameters += element.toParameter("args", typeRef(String).addArrayTypeDimension)
+				// make the method static
+				static = true
+				// Associate the model with the body of the main method
+				body = element
+			]
+		]
 	}
 }
