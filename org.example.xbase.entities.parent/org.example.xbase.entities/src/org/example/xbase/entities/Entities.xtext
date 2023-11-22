@@ -9,7 +9,9 @@ Model:
 
 Entity:
 	annotations+=XAnnotation*
-	'entity' name=ID ('extends' superType=JvmParameterizedTypeReference)?
+	'entity' name=ID
+	('<' typeParameters+=JvmTypeParameter (',' typeParameters+=JvmTypeParameter)* '>')?
+	('extends' superType=JvmParameterizedTypeReference)?
 	'{'
 	attributes+=Attribute*
 	operations+=Operation*

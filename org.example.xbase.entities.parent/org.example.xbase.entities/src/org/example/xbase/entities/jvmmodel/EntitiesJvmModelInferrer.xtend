@@ -4,8 +4,11 @@
 package org.example.xbase.entities.jvmmodel
 
 import com.google.inject.Inject
+import java.util.List
 import org.eclipse.xtext.common.types.JvmAnnotationTarget
 import org.eclipse.xtext.common.types.JvmDeclaredType
+import org.eclipse.xtext.common.types.JvmTypeParameter
+import org.eclipse.xtext.common.types.JvmTypeParameterDeclarator
 import org.eclipse.xtext.xbase.annotations.xAnnotations.XAnnotation
 import org.eclipse.xtext.xbase.jvmmodel.AbstractModelInferrer
 import org.eclipse.xtext.xbase.jvmmodel.IJvmDeclaredTypeAcceptor
@@ -50,6 +53,7 @@ class EntitiesJvmModelInferrer extends AbstractModelInferrer {
 	 */
 	def dispatch void infer(Entity entity, IJvmDeclaredTypeAcceptor acceptor, boolean isPreIndexingPhase) {
 		acceptor.accept(entity.toClass("entities." + entity.name)) [
+			copyTypeParameters(entity.typeParameters)
 			documentation = entity.documentation
 			if (entity.superType !== null)
 				superTypes += entity.superType.cloneWithProxies
@@ -92,6 +96,12 @@ class EntitiesJvmModelInferrer extends AbstractModelInferrer {
 
 	def private void translateAnnotations(JvmAnnotationTarget target, Iterable<XAnnotation> annotations) {
 		target.addAnnotations(annotations.filterNull.filter[annotationType !== null])
+	}
+
+	def private void copyTypeParameters(JvmTypeParameterDeclarator target, List<JvmTypeParameter> typeParameters) {
+		for (typeParameter : typeParameters) {
+			target.typeParameters += typeParameter.cloneWithProxies
+		}
 	}
 
 }
