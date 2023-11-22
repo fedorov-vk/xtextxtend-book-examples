@@ -57,6 +57,9 @@ class EntitiesJvmModelInferrer extends AbstractModelInferrer {
 			for (a : entity.attributes) {
 				val type = a.type ?: a.initexpression?.inferredType
 				members += a.toField(a.name, type) [
+					if (a.extension) {
+						annotations += annotationRef(Extension)
+					}
 					translateAnnotations(a.annotations)
 					documentation = a.documentation
 					if (a.initexpression !== null)

@@ -17,7 +17,7 @@ Entity:
 
 Attribute:
 	annotations+=XAnnotation*
-	'attr' (type=JvmTypeReference)? name=ID
+	'attr' (extension?='extension')? (type=JvmTypeReference)? name=ID
 	('=' initexpression=XExpression)? ';';
 
 Operation:
