@@ -3,6 +3,7 @@ grammar org.example.xbase.entities.Entities with org.eclipse.xtext.xbase.Xbase
 generate entities "http://www.example.org/xbase/entities/Entities"
 
 Model:
+	importSection=XImportSection?
 	entities+=Entity*;
 
 Entity:

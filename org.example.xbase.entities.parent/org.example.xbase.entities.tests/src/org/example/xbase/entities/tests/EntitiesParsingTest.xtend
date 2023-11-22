@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.*
 class EntitiesParsingTest {
 	@Inject
 	ParseHelper<Model> parseHelper
-	
+
 	@Test
 	def void loadModel() {
 		val result = parseHelper.parse('''
