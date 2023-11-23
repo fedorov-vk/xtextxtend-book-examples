@@ -1,20 +1,26 @@
 package org.example.xbase.expressions.compiler
 
+import com.google.inject.Inject
 import org.eclipse.xtext.xbase.XExpression
 import org.eclipse.xtext.xbase.compiler.XbaseCompiler
 import org.eclipse.xtext.xbase.compiler.output.ITreeAppendable
+import org.eclipse.xtext.xbase.typesystem.IBatchTypeResolver
 import org.example.xbase.expressions.expressions.EvalExpression
 
 class ExpressionsCompiler extends XbaseCompiler {
+
+	@Inject IBatchTypeResolver batchTypeResolver
 
 	override protected doInternalToJavaStatement(XExpression obj, ITreeAppendable a, boolean isReferenced) {
 		if (obj instanceof EvalExpression) {
 			obj.expression.internalToJavaStatement(a, true)
 			a.newLine
 			if (isReferenced) {
+				val e = obj.expression
 				val name = a.declareSyntheticVariable(obj, "_eval")
-				a.append('''String «name» = "" + ''')
-				obj.expression.internalToJavaExpression(a)
+				a.append('''String «name» = ''')
+				e.generateStringConversion(a)
+				e.internalToJavaExpression(a)
 				a.append(";")
 			} else {
 				a.append('''System.out.println(''')
@@ -23,6 +29,13 @@ class ExpressionsCompiler extends XbaseCompiler {
 			}
 		} else
 			super.doInternalToJavaStatement(obj, a, isReferenced)
+	}
+
+	def private generateStringConversion(XExpression e, ITreeAppendable a) {
+		val actualType = batchTypeResolver.resolveTypes(e).getActualType(e)
+		if (!actualType.isType(String)) {
+			a.append('''"" + ''')
+		}
 	}
 
 	override protected internalToConvertedExpression(XExpression obj, ITreeAppendable a) {
