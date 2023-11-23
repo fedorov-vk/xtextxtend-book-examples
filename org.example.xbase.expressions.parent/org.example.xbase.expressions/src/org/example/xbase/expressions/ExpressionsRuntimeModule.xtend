@@ -3,9 +3,16 @@
  */
 package org.example.xbase.expressions
 
+import org.eclipse.xtext.xbase.typesystem.computation.ITypeComputer
+import org.example.xbase.expressions.typesystem.ExpressionsTypeComputer
 
 /**
  * Use this class to register components to be used at runtime / without the Equinox extension registry.
  */
 class ExpressionsRuntimeModule extends AbstractExpressionsRuntimeModule {
+
+	def Class<? extends ITypeComputer> bindITypeComputer() {
+		ExpressionsTypeComputer
+	}
+
 }
