@@ -1,0 +1,16 @@
+**/bin
+**/test-bin
+**/src-gen
+**/xtend-gen
+**/emf-gen
+
+*.jar
+
+# for Maven builds
+**/target
+
+# for Gradle builds
+build
+.gradle
+
+.DS_Store
