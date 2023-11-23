@@ -10,6 +10,11 @@ Require-Bundle: org.example.xbase.expressions,
  org.eclipse.xtext.testing,
  org.eclipse.xtext.xbase.testing,
  org.eclipse.xtext.xbase.lib;bundle-version="2.14.0",
+ junit-jupiter-api;bundle-version="5.9.1",
+ junit-jupiter-engine;bundle-version="5.9.1",
+ junit-platform-suite-api;bundle-version="1.9.1",
+ junit-platform-suite-engine;bundle-version="1.9.1",
+ junit-platform-suite-commons;bundle-version="1.9.1",
  org.objectweb.asm;bundle-version="[9.4.0,9.5.0)";resolution:=optional
 Import-Package: org.junit.jupiter.api;version="[5.1.0,6.0.0)",
  org.junit.jupiter.api.extension;version="[5.1.0,6.0.0)"
