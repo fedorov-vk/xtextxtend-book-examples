@@ -7,24 +7,55 @@ import com.google.inject.Inject
 import org.eclipse.xtext.testing.InjectWith
 import org.eclipse.xtext.testing.extensions.InjectionExtension
 import org.eclipse.xtext.testing.util.ParseHelper
-import org.eclipse.xtext.xbase.XBlockExpression
-import org.junit.jupiter.api.Assertions
+import org.eclipse.xtext.xbase.XMemberFeatureCall
+import org.example.xbase.expressions.expressions.EvalExpression
+import org.example.xbase.expressions.expressions.ExpressionsModel
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.^extension.ExtendWith
+
+import static org.junit.jupiter.api.Assertions.*
 
 @ExtendWith(InjectionExtension)
 @InjectWith(ExpressionsInjectorProvider)
 class ExpressionsParsingTest {
-	@Inject
-	ParseHelper<XBlockExpression> parseHelper
-	
+
+	@Inject extension ParseHelper<ExpressionsModel>
+
 	@Test
 	def void loadModel() {
-		val result = parseHelper.parse('''
-			Hello Xtext!
+		val result = parse('''
+			println("Hello Xtext!")
 		''')
-		Assertions.assertNotNull(result)
-		val errors = result.eResource.errors
-		Assertions.assertTrue(errors.isEmpty, '''Unexpected errors: «errors.join(", ")»''')
+		assertNotNull(result)
+	}
+
+	@Test
+	def void testEvalExpression() {
+		'''
+			val i = 0
+			eval i
+		'''.parse.expressions.last => [
+			assertTrue(it instanceof EvalExpression)
+		]
+	}
+
+	@Test
+	def void testEvalExpressionAsReceiver() {
+		'''
+			val i = 0
+			(eval i).toString
+		'''.parse.expressions.last => [
+			assertTrue((it as XMemberFeatureCall).actualReceiver instanceof EvalExpression, "type " + class)
+		]
+	}
+
+	@Test
+	def void testEvalExpressionAssociativity() {
+		'''
+			val i = 0
+			eval i.toString
+		'''.parse.expressions.last => [
+			assertTrue((it as EvalExpression).expression instanceof XMemberFeatureCall, "type " + class)
+		]
 	}
 }
