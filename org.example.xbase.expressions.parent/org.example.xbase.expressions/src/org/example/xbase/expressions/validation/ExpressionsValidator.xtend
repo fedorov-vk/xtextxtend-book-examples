@@ -3,6 +3,8 @@
  */
 package org.example.xbase.expressions.validation
 
+import org.eclipse.xtext.xbase.XExpression
+import org.example.xbase.expressions.expressions.EvalExpression
 
 /**
  * This class contains custom validation rules. 
@@ -10,16 +12,9 @@ package org.example.xbase.expressions.validation
  * See https://www.eclipse.org/Xtext/documentation/303_runtime_concepts.html#validation
  */
 class ExpressionsValidator extends AbstractExpressionsValidator {
-	
-//	public static val INVALID_NAME = 'invalidName'
-//
-//	@Check
-//	def checkGreetingStartsWithCapital(Greeting greeting) {
-//		if (!Character.isUpperCase(greeting.name.charAt(0))) {
-//			warning('Name should start with a capital', 
-//					ExpressionsPackage.Literals.GREETING__NAME,
-//					INVALID_NAME)
-//		}
-//	}
-	
+
+	override protected isValueExpectedRecursive(XExpression expr) {
+		return expr.eContainer instanceof EvalExpression || super.isValueExpectedRecursive(expr)
+	}
+
 }
