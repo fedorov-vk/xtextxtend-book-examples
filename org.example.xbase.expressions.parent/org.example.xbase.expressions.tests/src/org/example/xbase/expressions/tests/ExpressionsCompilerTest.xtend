@@ -199,6 +199,64 @@ class ExpressionsCompilerTest {
 	}
 
 	@Test
+	def void testEvalExpressionCompilation5() {
+		'''
+			var i = 0
+			while (!(eval args.get(i)).empty) {
+				println(args.get(i++))
+			}
+		'''.compile [
+			checkValidationErrors
+			'''
+				import org.eclipse.xtext.xbase.lib.InputOutput;
+				
+				@SuppressWarnings("all")
+				public class MyFile {
+				  public static void main(final String[] args) {
+				    int i = 0;
+				    while ((!(args[i]).isEmpty())) {
+				      int _plusPlus = i++;
+				      InputOutput.<String>println(args[_plusPlus]);
+				    }
+				  }
+				}
+			'''.toString.assertEquals(singleGeneratedCode)
+			compiledClass
+		]
+	}
+
+	@Test
+	def void testEvalExpressionCompilation6() {
+		'''
+			var a = newArrayList(0, 1, 2)
+			var i = 0
+			while (i < a.size && !(eval a.get(i)).empty) {
+				println(a.get(i++))
+			}
+		'''.compile [
+			checkValidationErrors
+			'''
+				import java.util.ArrayList;
+				import org.eclipse.xtext.xbase.lib.CollectionLiterals;
+				import org.eclipse.xtext.xbase.lib.InputOutput;
+				
+				@SuppressWarnings("all")
+				public class MyFile {
+				  public static void main(final String[] args) {
+				    ArrayList<Integer> a = CollectionLiterals.<Integer>newArrayList(Integer.valueOf(0), Integer.valueOf(1), Integer.valueOf(2));
+				    int i = 0;
+				    while (((i < a.size()) && (!("" + a.get(i)).isEmpty()))) {
+				      int _plusPlus = i++;
+				      InputOutput.<Integer>println(a.get(_plusPlus));
+				    }
+				  }
+				}
+			'''.toString.assertEquals(singleGeneratedCode)
+			compiledClass
+		]
+	}
+
+	@Test
 	def void testTwoEvalExpressionsCompilation() {
 		'''
 			val i = eval 0

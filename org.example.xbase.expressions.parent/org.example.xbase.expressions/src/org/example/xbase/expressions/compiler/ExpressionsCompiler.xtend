@@ -39,15 +39,24 @@ class ExpressionsCompiler extends XbaseCompiler {
 	}
 
 	override protected internalToConvertedExpression(XExpression obj, ITreeAppendable a) {
-		if (obj instanceof EvalExpression)
-			a.append(getVarName(obj, a))
-		else
+		if (obj instanceof EvalExpression) {
+			if (a.hasName(obj)) {
+				a.append(getVarName(obj, a))
+			} else {
+				// compile the eval directly as a Java expression
+				val e = obj.expression
+				a.append("(")
+				e.generateStringConversion(a)
+				e.internalToJavaExpression(a)
+				a.append(")")
+			}
+		} else
 			super.internalToConvertedExpression(obj, a)
 	}
 
 	override protected internalCanCompileToJavaExpression(XExpression e, ITreeAppendable a) {
 		if (e instanceof EvalExpression)
-			return false
+			return e.expression.internalCanCompileToJavaExpression(a)
 		else
 			super.internalCanCompileToJavaExpression(e, a)
 	}
